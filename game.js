@@ -80,6 +80,10 @@ class WisdomQuest {
         this.keys = {};
         this.gameState = 'start';
         this.currentDialogue = null;
+        this.gameTime = 0;
+        this.reputation = { good: 0, neutral: 0, evil: 0 };
+        this.achievements = [];
+        this.visitedAreas = new Set();
         
         this.scenarios = {
             sage: {
@@ -176,7 +180,7 @@ class WisdomQuest {
         document.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
             
-            if (e.key === ' ') {
+            if (e.key === ' ' || e.key === 'Enter') {
                 e.preventDefault();
                 if (this.inDialogue) {
                     this.selectChoice();
