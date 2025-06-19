@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wisdom Quest - A Philosophical Adventure</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>🎮 Wisdom Quest</h1>
+            <p>An 8-bit adventure for the mind and soul</p>
+        </header>
+        
+        <div id="game-screen">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="ui-overlay">
+                <div id="stats-panel">
+                    <div class="stat">
+                        <span>Wisdom:</span>
+                        <div class="stat-bar"><div id="wisdom-bar" class="stat-fill"></div></div>
+                        <span id="wisdom-value">50</span>
+                    </div>
+                    <div class="stat">
+                        <span>Compassion:</span>
+                        <div class="stat-bar"><div id="compassion-bar" class="stat-fill"></div></div>
+                        <span id="compassion-value">50</span>
+                    </div>
+                    <div class="stat">
+                        <span>Courage:</span>
+                        <div class="stat-bar"><div id="courage-bar" class="stat-fill"></div></div>
+                        <span id="courage-value">50</span>
+                    </div>
+                </div>
+                
+                <div id="dialogue-box" class="hidden">
+                    <div id="dialogue-text"></div>
+                    <div id="dialogue-choices"></div>
+                </div>
+                
+                <div id="controls">
+                    <p>Use WASD or Arrow Keys to move • Space to interact • In dialogue: ↑↓ to choose, Space to select</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="start-screen">
+            <h2>Welcome, Seeker of Wisdom</h2>
+            <p>In this realm, your choices shape not just your destiny, but your character.</p>
+            <p>Face moral dilemmas, solve philosophical puzzles, and discover the hero within.</p>
+            <button id="start-btn">Begin Your Journey</button>
+        </div>
+        
+        <div id="character-creation" class="hidden">
+            <h2>Create Your Character</h2>
+            <div id="character-preview">
+                <canvas id="previewCanvas" width="200" height="200"></canvas>
+            </div>
+            <div id="customization-options">
+                <div class="option-group">
+                    <label>Body Color:</label>
+                    <div class="color-options" data-type="body">
+                        <div class="color-option selected" data-color="#ffd700"></div>
+                        <div class="color-option" data-color="#ff6b6b"></div>
+                        <div class="color-option" data-color="#4ecdc4"></div>
+                        <div class="color-option" data-color="#9b59b6"></div>
+                        <div class="color-option" data-color="#e67e22"></div>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <label>Head Color:</label>
+                    <div class="color-options" data-type="head">
+                        <div class="color-option selected" data-color="#ffeb99"></div>
+                        <div class="color-option" data-color="#deb887"></div>
+                        <div class="color-option" data-color="#f5deb3"></div>
+                        <div class="color-option" data-color="#8b4513"></div>
+                        <div class="color-option" data-color="#2f4f4f"></div>
+                    </div>
+                </div>
+                <div class="option-group">
+                    <label>Starting Focus:</label>
+                    <div class="focus-options">
+                        <div class="focus-option selected" data-focus="balanced">
+                            <strong>Balanced</strong><br>
+                            <small>Wisdom: 50, Compassion: 50, Courage: 50</small>
+                        </div>
+                        <div class="focus-option" data-focus="scholar">
+                            <strong>Scholar</strong><br>
+                            <small>Wisdom: 65, Compassion: 40, Courage: 35</small>
+                        </div>
+                        <div class="focus-option" data-focus="empath">
+                            <strong>Empath</strong><br>
+                            <small>Wisdom: 35, Compassion: 65, Courage: 40</small>
+                        </div>
+                        <div class="focus-option" data-focus="hero">
+                            <strong>Hero</strong><br>
+                            <small>Wisdom: 40, Compassion: 35, Courage: 65</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="creation-controls">
+                <p>Use Arrow Keys to navigate • Space to select • Enter to confirm</p>
+                <button id="confirm-character">Confirm Character</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,860 @@
+class WisdomQuest {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false;
+        
+        this.player = {
+            x: 400, y: 300, size: 16, speed: 2,
+            wisdom: 50, compassion: 50, courage: 50,
+            bodyColor: '#ffd700',
+            headColor: '#ffeb99'
+        };
+        
+        this.selectedChoice = 0;
+        this.inDialogue = false;
+        
+        this.currentArea = 'town_square';
+        this.areas = {
+            town_square: {
+                name: 'Town Square',
+                npcs: [
+                    { x: 400, y: 200, type: 'philosopher', name: 'The Philosopher', interacted: false },
+                    { x: 200, y: 400, type: 'child', name: 'Lost Child', interacted: false }
+                ],
+                buildings: [
+                    { x: 100, y: 100, w: 120, h: 80, type: 'library', name: 'Library' },
+                    { x: 580, y: 100, w: 120, h: 80, type: 'market', name: 'Market' },
+                    { x: 100, y: 450, w: 120, h: 80, type: 'courthouse', name: 'Courthouse' },
+                    { x: 580, y: 450, w: 120, h: 80, type: 'tavern', name: 'Tavern' }
+                ],
+                exits: [
+                    { x: 750, y: 300, w: 50, h: 60, to: 'forest', name: 'Forest Path' }
+                ]
+            },
+            library: {
+                name: 'Ancient Library',
+                npcs: [
+                    { x: 200, y: 300, type: 'sage', name: 'The Sage', interacted: false },
+                    { x: 600, y: 200, type: 'scientist', name: 'The Scientist', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+            },
+            market: {
+                name: 'Bustling Market',
+                npcs: [
+                    { x: 300, y: 250, type: 'merchant', name: 'The Merchant', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+            },
+            courthouse: {
+                name: 'Hall of Justice',
+                npcs: [
+                    { x: 400, y: 300, type: 'judge', name: 'The Judge', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+            },
+            tavern: {
+                name: 'The Thinking Tavern',
+                npcs: [
+                    { x: 200, y: 300, type: 'warrior', name: 'The Warrior', interacted: false },
+                    { x: 600, y: 350, type: 'artist', name: 'The Artist', interacted: false },
+                    { x: 400, y: 200, type: 'teacher', name: 'The Teacher', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+            },
+            forest: {
+                name: 'Hermit\'s Forest',
+                npcs: [
+                    { x: 150, y: 400, type: 'hermit', name: 'The Hermit', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 50, y: 300, w: 50, h: 60, to: 'town_square', name: 'Town Square' }]
+            }
+        };
+        
+        this.keys = {};
+        this.gameState = 'start';
+        this.currentDialogue = null;
+        
+        this.scenarios = {
+            sage: {
+                text: "Welcome to my sanctuary of knowledge. A desperate student begs me to give them answers to tomorrow's crucial exam. Knowledge earned vs. knowledge given - what say you?",
+                choices: [
+                    { text: "Give them the answers", effect: { wisdom: -12, compassion: +3, courage: -5 }, consequence: "The sage frowns. 'You rob them of true learning and growth.'" },
+                    { text: "Teach them to find answers", effect: { wisdom: +15, compassion: +8, courage: +5 }, consequence: "The sage beams. 'Give a person a fish, feed them for a day...'" },
+                    { text: "Refuse to help at all", effect: { wisdom: +2, compassion: -8, courage: -3 }, consequence: "The sage sighs. 'Wisdom without compassion is cold indeed.'" }
+                ]
+            },
+            merchant: {
+                text: "Business is slow, friend. I could triple my profits by selling fake medicine to desperate people. They'll never know the difference until it's too late.",
+                choices: [
+                    { text: "Profit is profit - do it", effect: { wisdom: -15, compassion: -20, courage: -10 }, consequence: "The merchant grins wickedly. 'You understand business!' People will suffer." },
+                    { text: "Find honest ways to profit", effect: { wisdom: +8, compassion: +10, courage: +7 }, consequence: "The merchant nods reluctantly. 'Harder path, but I'll sleep better.'" },
+                    { text: "Report him to authorities", effect: { wisdom: +5, compassion: +15, courage: +12 }, consequence: "The merchant panics. 'Wait! I... I was only testing you!'" }
+                ]
+            },
+            child: {
+                text: "Please help! My little sister fell down the old well! The adults say it's too dangerous, but she's still alive down there. What do we do?",
+                choices: [
+                    { text: "It's too risky - wait for help", effect: { wisdom: +3, compassion: -10, courage: -15 }, consequence: "The child cries. Time is running out..." },
+                    { text: "Organize a careful rescue", effect: { wisdom: +10, compassion: +15, courage: +12 }, consequence: "The child's eyes light up with hope. 'Thank you for not giving up!'" },
+                    { text: "Go down alone immediately", effect: { wisdom: -5, compassion: +8, courage: +15 }, consequence: "Brave but reckless - sometimes courage needs wisdom too." }
+                ]
+            },
+            warrior: {
+                text: "I've been hired to evict a family who can't pay rent. They have nowhere to go and winter approaches. Orders are orders, but...",
+                choices: [
+                    { text: "Follow orders without question", effect: { wisdom: -8, compassion: -15, courage: -5 }, consequence: "The warrior hardens. 'Duty above all.' A family suffers." },
+                    { text: "Refuse and find another way", effect: { wisdom: +12, compassion: +15, courage: +10 }, consequence: "The warrior smiles. 'True strength protects the innocent.'" },
+                    { text: "Delay and warn the family", effect: { wisdom: +8, compassion: +10, courage: +8 }, consequence: "The warrior nods. 'Sometimes the best battles are avoided.'" }
+                ]
+            },
+            philosopher: {
+                text: "Ah, a fellow seeker! I ponder: 'If a tree falls in a forest and no one hears it, does it make a sound?' But more importantly - if we live unwitnessed, do our good deeds matter?",
+                choices: [
+                    { text: "Only witnessed acts have value", effect: { wisdom: -8, compassion: -10, courage: -3 }, consequence: "The philosopher shakes his head sadly. 'Then you seek glory, not goodness.'" },
+                    { text: "Good deeds matter regardless", effect: { wisdom: +8, compassion: +10, courage: +5 }, consequence: "The philosopher smiles. 'True virtue needs no audience.'" },
+                    { text: "The question itself is flawed", effect: { wisdom: +12, compassion: +3, courage: +2 }, consequence: "The philosopher nods approvingly. 'You see beyond the surface - wisdom indeed.'" }
+                ]
+            },
+            hermit: {
+                text: "I've discovered a cure for a plague ravaging nearby villages, but sharing it means revealing my location and losing my peaceful solitude forever. What would you do?",
+                choices: [
+                    { text: "Keep the secret and your peace", effect: { wisdom: -20, compassion: -25, courage: -15 }, consequence: "The hermit nods sadly. 'Then we are both selfish.' Thousands will die." },
+                    { text: "Share the cure despite the cost", effect: { wisdom: +15, compassion: +20, courage: +15 }, consequence: "The hermit smiles through tears. 'True wisdom serves others.'" },
+                    { text: "Find a way to share anonymously", effect: { wisdom: +18, compassion: +15, courage: +10 }, consequence: "The hermit's eyes brighten. 'Clever and compassionate - well done.'" }
+                ]
+            },
+            judge: {
+                text: "A wealthy noble's son killed a peasant while drunk. His father offers me a fortune to reduce the sentence. The peasant's family begs for justice. What is right?",
+                choices: [
+                    { text: "Take the bribe - money talks", effect: { wisdom: -20, compassion: -20, courage: -15 }, consequence: "The judge looks disgusted. 'Then justice is truly dead.' Corruption spreads." },
+                    { text: "Apply the law equally", effect: { wisdom: +15, compassion: +15, courage: +18 }, consequence: "The judge stands tall. 'Justice is blind to wealth and status.'" },
+                    { text: "Seek a compromise solution", effect: { wisdom: +5, compassion: +8, courage: +3 }, consequence: "The judge frowns. 'Some compromises compromise justice itself.'" }
+                ]
+            },
+            artist: {
+                text: "The king commissions me to create propaganda glorifying his unjust war. Refuse and face exile, or create art that will inspire young men to die for lies?",
+                choices: [
+                    { text: "Create the propaganda", effect: { wisdom: -15, compassion: -18, courage: -12 }, consequence: "The artist weeps. 'Then we are both cowards.' Blood stains your hands." },
+                    { text: "Refuse and face the consequences", effect: { wisdom: +12, compassion: +15, courage: +20 }, consequence: "The artist nods proudly. 'True art serves truth, not power.'" },
+                    { text: "Create subtle anti-war messages", effect: { wisdom: +18, compassion: +12, courage: +15 }, consequence: "The artist grins. 'Subversion through beauty - brilliant!'" }
+                ]
+            },
+            scientist: {
+                text: "I've discovered my research is being used to create weapons of mass destruction. I could destroy my work, but years of medical breakthroughs would be lost too.",
+                choices: [
+                    { text: "Let them weaponize it", effect: { wisdom: -25, compassion: -20, courage: -10 }, consequence: "The scientist looks horrified. 'Then we've doomed humanity.' Cities will burn." },
+                    { text: "Destroy everything to prevent misuse", effect: { wisdom: +10, compassion: +20, courage: +18 }, consequence: "The scientist nods grimly. 'Some knowledge is too dangerous.'" },
+                    { text: "Leak it to prevent monopolization", effect: { wisdom: +15, compassion: +15, courage: +15 }, consequence: "The scientist considers. 'Dangerous, but it levels the field.'" }
+                ]
+            },
+            teacher: {
+                text: "I've discovered the principal is embezzling funds meant for poor students' meals. Speaking up could cost my job and my family's livelihood. What's right?",
+                choices: [
+                    { text: "Stay silent to protect yourself", effect: { wisdom: -15, compassion: -20, courage: -18 }, consequence: "The teacher looks ashamed. 'Then we both fail our students.' Children go hungry." },
+                    { text: "Report it despite the risks", effect: { wisdom: +12, compassion: +18, courage: +20 }, consequence: "The teacher stands straighter. 'Some things matter more than security.'" },
+                    { text: "Gather evidence first", effect: { wisdom: +18, compassion: +15, courage: +12 }, consequence: "The teacher nods. 'Wisdom and courage - the perfect combination.'" }
+                ]
+            }
+        };
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupEventListeners();
+        this.gameLoop();
+    }
+    
+    setupEventListeners() {
+        document.addEventListener('keydown', (e) => {
+            this.keys[e.key.toLowerCase()] = true;
+            
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (this.inDialogue) {
+                    this.selectChoice();
+                } else {
+                    this.interact();
+                }
+            }
+            
+            if (this.inDialogue) {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    this.navigateChoices(-1);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.navigateChoices(1);
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            this.keys[e.key.toLowerCase()] = false;
+        });
+        
+        document.getElementById('start-btn').addEventListener('click', () => {
+            this.showCharacterCreation();
+        });
+        
+        document.getElementById('confirm-character').addEventListener('click', () => {
+            this.startGame();
+        });
+        
+        this.setupCharacterCreation();
+    }
+    
+    showCharacterCreation() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('character-creation').classList.remove('hidden');
+        this.updateCharacterPreview();
+    }
+    
+    startGame() {
+        document.getElementById('character-creation').classList.add('hidden');
+        this.gameState = 'playing';
+    }
+    
+    setupCharacterCreation() {
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(option => {
+            const color = option.dataset.color;
+            option.style.backgroundColor = color;
+            
+            option.addEventListener('click', () => {
+                const type = option.parentElement.dataset.type;
+                option.parentElement.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                if (type === 'body') {
+                    this.player.bodyColor = color;
+                } else if (type === 'head') {
+                    this.player.headColor = color;
+                }
+                this.updateCharacterPreview();
+            });
+        });
+        
+        // Focus selection
+        document.querySelectorAll('.focus-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.focus-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                const focus = option.dataset.focus;
+                const stats = {
+                    balanced: { wisdom: 50, compassion: 50, courage: 50 },
+                    scholar: { wisdom: 65, compassion: 40, courage: 35 },
+                    empath: { wisdom: 35, compassion: 65, courage: 40 },
+                    hero: { wisdom: 40, compassion: 35, courage: 65 }
+                };
+                
+                Object.assign(this.player, stats[focus]);
+            });
+        });
+    }
+    
+    updateCharacterPreview() {
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        
+        // Clear
+        ctx.fillStyle = '#2c5530';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw character preview (scaled up)
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = 4;
+        
+        // Body
+        ctx.fillStyle = this.player.bodyColor;
+        ctx.fillRect(centerX - 8*scale, centerY - 4*scale, 16*scale, 12*scale);
+        
+        // Head
+        ctx.fillStyle = this.player.headColor;
+        ctx.fillRect(centerX - 6*scale, centerY - 12*scale, 12*scale, 8*scale);
+        
+        // Eyes
+        ctx.fillStyle = '#000';
+        ctx.fillRect(centerX - 4*scale, centerY - 10*scale, 2*scale, 2*scale);
+        ctx.fillRect(centerX + 2*scale, centerY - 10*scale, 2*scale, 2*scale);
+        
+        // Smile
+        ctx.fillRect(centerX - 3*scale, centerY - 7*scale, 6*scale, 1*scale);
+        
+        // Arms
+        ctx.fillStyle = this.player.headColor;
+        ctx.fillRect(centerX - 10*scale, centerY - 2*scale, 4*scale, 6*scale);
+        ctx.fillRect(centerX + 6*scale, centerY - 2*scale, 4*scale, 6*scale);
+        
+        // Legs
+        const legColor = this.adjustColor(this.player.bodyColor, -20);
+        ctx.fillStyle = legColor;
+        ctx.fillRect(centerX - 6*scale, centerY + 8*scale, 4*scale, 6*scale);
+        ctx.fillRect(centerX + 2*scale, centerY + 8*scale, 4*scale, 6*scale);
+    }
+    
+    adjustColor(hex, amount) {
+        const num = parseInt(hex.replace('#', ''), 16);
+        const amt = Math.round(2.55 * amount);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    update() {
+        if (this.gameState !== 'playing') return;
+        
+        // Player movement
+        if (this.keys['w'] || this.keys['arrowup']) {
+            this.player.y = Math.max(16, this.player.y - this.player.speed);
+        }
+        if (this.keys['s'] || this.keys['arrowdown']) {
+            this.player.y = Math.min(this.canvas.height - 16, this.player.y + this.player.speed);
+        }
+        if (this.keys['a'] || this.keys['arrowleft']) {
+            this.player.x = Math.max(16, this.player.x - this.player.speed);
+        }
+        if (this.keys['d'] || this.keys['arrowright']) {
+            this.player.x = Math.min(this.canvas.width - 16, this.player.x + this.player.speed);
+        }
+        
+        this.updateUI();
+    }
+    
+    render() {
+        const area = this.areas[this.currentArea];
+        
+        // Clear canvas
+        this.ctx.fillStyle = this.getAreaColor();
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw area-specific background
+        this.drawAreaBackground();
+        
+        // Draw buildings
+        area.buildings.forEach(building => {
+            this.drawBuilding(building);
+        });
+        
+        // Draw exits
+        area.exits.forEach(exit => {
+            this.drawExit(exit);
+        });
+        
+        // Draw NPCs
+        area.npcs.forEach(npc => {
+            this.drawNPC(npc);
+        });
+        
+        // Draw player
+        this.drawPlayer();
+        
+        // Draw interaction hints
+        this.drawInteractionHints();
+        
+        // Draw area name
+        this.drawAreaName(area.name);
+    }
+    
+    getAreaColor() {
+        const colors = {
+            town_square: '#2c5530',
+            library: '#4a4a4a',
+            market: '#8b4513',
+            courthouse: '#2c3e50',
+            tavern: '#654321',
+            forest: '#1a4a1a'
+        };
+        return colors[this.currentArea] || '#0f3460';
+    }
+    
+    drawAreaBackground() {
+        const patterns = {
+            town_square: () => {
+                // Cobblestone pattern
+                this.ctx.fillStyle = '#3a6b3e';
+                for (let x = 0; x < this.canvas.width; x += 30) {
+                    for (let y = 0; y < this.canvas.height; y += 30) {
+                        if ((x + y) % 60 === 0) {
+                            this.ctx.fillRect(x, y, 15, 15);
+                        }
+                    }
+                }
+            },
+            forest: () => {
+                // Tree pattern
+                this.ctx.fillStyle = '#0d3d0d';
+                for (let i = 0; i < 20; i++) {
+                    const x = (i * 73) % this.canvas.width;
+                    const y = (i * 97) % this.canvas.height;
+                    this.ctx.fillRect(x, y, 8, 12);
+                }
+            }
+        };
+        
+        if (patterns[this.currentArea]) {
+            patterns[this.currentArea]();
+        }
+    }
+    
+    drawBuilding(building) {
+        const colors = {
+            library: '#8b4513',
+            market: '#ff6b35',
+            courthouse: '#34495e',
+            tavern: '#d35400'
+        };
+        
+        this.ctx.fillStyle = colors[building.type] || '#666';
+        this.ctx.fillRect(building.x, building.y, building.w, building.h);
+        
+        // Door
+        this.ctx.fillStyle = '#2c3e50';
+        this.ctx.fillRect(building.x + building.w/2 - 15, building.y + building.h - 30, 30, 30);
+        
+        // Name
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = '10px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(building.name, building.x + building.w/2, building.y - 5);
+    }
+    
+    drawExit(exit) {
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.fillRect(exit.x, exit.y, exit.w, exit.h);
+        
+        this.ctx.fillStyle = '#000';
+        this.ctx.font = '8px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('→ ' + exit.name, exit.x + exit.w/2, exit.y + exit.h/2);
+    }
+    
+    drawAreaName(name) {
+        this.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        this.ctx.fillRect(10, 10, 200, 30);
+        
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.font = '12px monospace';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(name, 20, 30);
+    }
+    
+    drawPlayer() {
+        // Body
+        this.ctx.fillStyle = this.player.bodyColor;
+        this.ctx.fillRect(this.player.x - 8, this.player.y - 4, 16, 12);
+        
+        // Head
+        this.ctx.fillStyle = this.player.headColor;
+        this.ctx.fillRect(this.player.x - 6, this.player.y - 12, 12, 8);
+        
+        // Eyes
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(this.player.x - 4, this.player.y - 10, 2, 2);
+        this.ctx.fillRect(this.player.x + 2, this.player.y - 10, 2, 2);
+        
+        // Smile
+        this.ctx.fillRect(this.player.x - 3, this.player.y - 7, 6, 1);
+        
+        // Arms
+        this.ctx.fillStyle = this.player.headColor;
+        this.ctx.fillRect(this.player.x - 10, this.player.y - 2, 4, 6);
+        this.ctx.fillRect(this.player.x + 6, this.player.y - 2, 4, 6);
+        
+        // Legs
+        const legColor = this.adjustColor(this.player.bodyColor, -20);
+        this.ctx.fillStyle = legColor;
+        this.ctx.fillRect(this.player.x - 6, this.player.y + 8, 4, 6);
+        this.ctx.fillRect(this.player.x + 2, this.player.y + 8, 4, 6);
+    }
+    
+    drawNPC(npc) {
+        const colors = {
+            sage: { body: '#9b59b6', head: '#d1a3e0', accent: '#fff' },
+            merchant: { body: '#e67e22', head: '#f39c12', accent: '#2c3e50' },
+            child: { body: '#e74c3c', head: '#ffb3ba', accent: '#fff' },
+            warrior: { body: '#2c3e50', head: '#bdc3c7', accent: '#e74c3c' },
+            philosopher: { body: '#34495e', head: '#ecf0f1', accent: '#f39c12' },
+            hermit: { body: '#8b4513', head: '#deb887', accent: '#228b22' },
+            judge: { body: '#000080', head: '#f5deb3', accent: '#ffd700' },
+            artist: { body: '#ff69b4', head: '#ffb6c1', accent: '#9370db' },
+            scientist: { body: '#ffffff', head: '#f0e68c', accent: '#000' },
+            teacher: { body: '#4682b4', head: '#f5deb3', accent: '#8b4513' }
+        };
+        
+        const color = colors[npc.type];
+        
+        // Body
+        this.ctx.fillStyle = color.body;
+        this.ctx.fillRect(npc.x - 8, npc.y - 4, 16, 12);
+        
+        // Head
+        this.ctx.fillStyle = color.head;
+        this.ctx.fillRect(npc.x - 6, npc.y - 12, 12, 8);
+        
+        // Character-specific details
+        this.drawNPCDetails(npc, color);
+        
+        // Eyes
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(npc.x - 4, npc.y - 10, 2, 2);
+        this.ctx.fillRect(npc.x + 2, npc.y - 10, 2, 2);
+        
+        // Name label
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = '8px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(npc.name, npc.x, npc.y - 18);
+    }
+    
+    drawNPCDetails(npc, color) {
+        this.ctx.fillStyle = color.accent;
+        
+        switch(npc.type) {
+            case 'sage':
+                // Beard
+                this.ctx.fillRect(npc.x - 4, npc.y - 6, 8, 4);
+                // Staff
+                this.ctx.fillRect(npc.x + 10, npc.y - 12, 2, 20);
+                break;
+            case 'merchant':
+                // Hat
+                this.ctx.fillRect(npc.x - 7, npc.y - 14, 14, 3);
+                // Bag
+                this.ctx.fillRect(npc.x - 12, npc.y, 4, 6);
+                break;
+            case 'child':
+                // Smaller size adjustment
+                this.ctx.fillStyle = color.body;
+                this.ctx.fillRect(npc.x - 6, npc.y - 2, 12, 8);
+                break;
+            case 'warrior':
+                // Helmet
+                this.ctx.fillRect(npc.x - 7, npc.y - 14, 14, 4);
+                // Sword
+                this.ctx.fillRect(npc.x + 10, npc.y - 8, 2, 12);
+                break;
+            case 'philosopher':
+                // Thinking pose - hand to chin
+                this.ctx.fillRect(npc.x - 10, npc.y - 8, 3, 4);
+                break;
+            case 'hermit':
+                // Long beard
+                this.ctx.fillRect(npc.x - 5, npc.y - 6, 10, 8);
+                // Walking stick
+                this.ctx.fillRect(npc.x - 12, npc.y - 10, 2, 16);
+                break;
+            case 'judge':
+                // Gavel
+                this.ctx.fillRect(npc.x + 8, npc.y - 6, 4, 2);
+                this.ctx.fillRect(npc.x + 9, npc.y - 8, 2, 4);
+                break;
+            case 'artist':
+                // Palette
+                this.ctx.fillRect(npc.x - 12, npc.y - 4, 4, 3);
+                // Brush
+                this.ctx.fillRect(npc.x + 8, npc.y - 6, 2, 8);
+                break;
+            case 'scientist':
+                // Lab coat buttons
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(npc.x - 2, npc.y - 2, 1, 1);
+                this.ctx.fillRect(npc.x - 2, npc.y + 2, 1, 1);
+                // Glasses
+                this.ctx.fillRect(npc.x - 5, npc.y - 9, 4, 1);
+                this.ctx.fillRect(npc.x + 1, npc.y - 9, 4, 1);
+                break;
+            case 'teacher':
+                // Book
+                this.ctx.fillRect(npc.x - 10, npc.y - 2, 3, 4);
+                // Apple
+                this.ctx.fillStyle = '#ff0000';
+                this.ctx.fillRect(npc.x + 8, npc.y - 4, 3, 3);
+                break;
+        }
+    }
+    
+    drawInteractionHints() {
+        const area = this.areas[this.currentArea];
+        
+        // NPC hints
+        area.npcs.forEach(npc => {
+            const distance = Math.sqrt(
+                Math.pow(this.player.x - npc.x, 2) + 
+                Math.pow(this.player.y - npc.y, 2)
+            );
+            
+            if (distance < 40 && !npc.interacted) {
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = '10px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Press SPACE', npc.x, npc.y + 25);
+            }
+        });
+        
+        // Building hints
+        area.buildings.forEach(building => {
+            if (this.player.x >= building.x - 20 && this.player.x <= building.x + building.w + 20 &&
+                this.player.y >= building.y - 20 && this.player.y <= building.y + building.h + 20) {
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = '10px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Press SPACE to enter', building.x + building.w/2, building.y + building.h + 15);
+            }
+        });
+        
+        // Exit hints
+        area.exits.forEach(exit => {
+            if (this.player.x >= exit.x - 20 && this.player.x <= exit.x + exit.w + 20 &&
+                this.player.y >= exit.y - 20 && this.player.y <= exit.y + exit.h + 20) {
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.font = '10px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Press SPACE', exit.x + exit.w/2, exit.y - 10);
+            }
+        });
+    }
+    
+    interact() {
+        if (this.currentDialogue) return;
+        
+        const area = this.areas[this.currentArea];
+        
+        // Check NPCs
+        area.npcs.forEach(npc => {
+            const distance = Math.sqrt(
+                Math.pow(this.player.x - npc.x, 2) + 
+                Math.pow(this.player.y - npc.y, 2)
+            );
+            
+            if (distance < 40 && !npc.interacted) {
+                this.startDialogue(npc);
+            }
+        });
+        
+        // Check buildings
+        area.buildings.forEach(building => {
+            if (this.player.x >= building.x && this.player.x <= building.x + building.w &&
+                this.player.y >= building.y && this.player.y <= building.y + building.h) {
+                this.enterBuilding(building.type);
+            }
+        });
+        
+        // Check exits
+        area.exits.forEach(exit => {
+            if (this.player.x >= exit.x && this.player.x <= exit.x + exit.w &&
+                this.player.y >= exit.y && this.player.y <= exit.y + exit.h) {
+                this.changeArea(exit.to);
+            }
+        });
+    }
+    
+    enterBuilding(buildingType) {
+        this.changeArea(buildingType);
+    }
+    
+    changeArea(newArea) {
+        this.currentArea = newArea;
+        this.player.x = 400;
+        this.player.y = 300;
+    }
+    
+    startDialogue(npc) {
+        this.currentDialogue = npc;
+        this.inDialogue = true;
+        this.selectedChoice = 0;
+        const scenario = this.scenarios[npc.type];
+        
+        document.getElementById('dialogue-box').classList.remove('hidden');
+        document.getElementById('dialogue-text').textContent = scenario.text;
+        
+        const choicesContainer = document.getElementById('dialogue-choices');
+        choicesContainer.innerHTML = '';
+        
+        scenario.choices.forEach((choice, index) => {
+            const button = document.createElement('button');
+            button.className = 'choice-btn';
+            if (index === 0) button.classList.add('selected');
+            button.textContent = `${index + 1}. ${choice.text}`;
+            button.addEventListener('click', () => this.makeChoice(choice, npc));
+            choicesContainer.appendChild(button);
+        });
+    }
+    
+    navigateChoices(direction) {
+        const choices = document.querySelectorAll('.choice-btn');
+        if (choices.length === 0) return;
+        
+        choices[this.selectedChoice].classList.remove('selected');
+        this.selectedChoice = (this.selectedChoice + direction + choices.length) % choices.length;
+        choices[this.selectedChoice].classList.add('selected');
+    }
+    
+    selectChoice() {
+        const choices = document.querySelectorAll('.choice-btn');
+        if (choices.length === 0) return;
+        
+        const scenario = this.scenarios[this.currentDialogue.type];
+        const selectedChoiceData = scenario.choices[this.selectedChoice];
+        this.makeChoice(selectedChoiceData, this.currentDialogue);
+    }
+    
+    makeChoice(choice, npc) {
+        // Apply stat changes
+        this.player.wisdom = Math.max(0, Math.min(100, this.player.wisdom + choice.effect.wisdom));
+        this.player.compassion = Math.max(0, Math.min(100, this.player.compassion + choice.effect.compassion));
+        this.player.courage = Math.max(0, Math.min(100, this.player.courage + choice.effect.courage));
+        
+        // Mark NPC as interacted
+        npc.interacted = true;
+        
+        // Close dialogue
+        document.getElementById('dialogue-box').classList.add('hidden');
+        this.currentDialogue = null;
+        this.inDialogue = false;
+        this.selectedChoice = 0;
+        
+        // Show consequence message
+        if (choice.consequence) {
+            this.showConsequence(choice.consequence, choice.effect);
+        }
+        
+        // Show wisdom gained/lost
+        this.showStatChange(choice.effect);
+        
+        // Check for game completion
+        this.checkGameCompletion();
+    }
+    
+    showConsequence(message, effect) {
+        const isNegative = effect.wisdom < 0 || effect.compassion < 0 || effect.courage < 0;
+        
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); color: ${isNegative ? '#ff6b6b' : '#4ecdc4'}; 
+            padding: 25px; border: 2px solid ${isNegative ? '#ff6b6b' : '#4ecdc4'}; 
+            border-radius: 8px; font-family: inherit; font-size: 11px; 
+            z-index: 1000; text-align: center; max-width: 400px; line-height: 1.4;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 3500);
+    }
+    
+    showStatChange(effect) {
+        const messages = [];
+        if (effect.wisdom !== 0) messages.push(`Wisdom ${effect.wisdom > 0 ? '+' : ''}${effect.wisdom}`);
+        if (effect.compassion !== 0) messages.push(`Compassion ${effect.compassion > 0 ? '+' : ''}${effect.compassion}`);
+        if (effect.courage !== 0) messages.push(`Courage ${effect.courage > 0 ? '+' : ''}${effect.courage}`);
+        
+        if (messages.length > 0) {
+            // Simple notification system
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9); color: #ffd700; padding: 20px;
+                border: 2px solid #ffd700; border-radius: 8px; font-family: inherit;
+                font-size: 12px; z-index: 1000; text-align: center;
+            `;
+            notification.textContent = messages.join(' • ');
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 2000);
+        }
+    }
+    
+    updateUI() {
+        document.getElementById('wisdom-value').textContent = this.player.wisdom;
+        document.getElementById('compassion-value').textContent = this.player.compassion;
+        document.getElementById('courage-value').textContent = this.player.courage;
+        
+        document.getElementById('wisdom-bar').style.width = this.player.wisdom + '%';
+        document.getElementById('compassion-bar').style.width = this.player.compassion + '%';
+        document.getElementById('courage-bar').style.width = this.player.courage + '%';
+    }
+    
+    checkGameCompletion() {
+        let totalNPCs = 0;
+        let interactedNPCs = 0;
+        
+        Object.values(this.areas).forEach(area => {
+            area.npcs.forEach(npc => {
+                totalNPCs++;
+                if (npc.interacted) interactedNPCs++;
+            });
+        });
+        
+        if (interactedNPCs === totalNPCs) {
+            setTimeout(() => {
+                this.showEndingMessage();
+            }, 2500);
+        }
+    }
+    
+    showEndingMessage() {
+        const totalScore = this.player.wisdom + this.player.compassion + this.player.courage;
+        let message = "Your philosophical journey is complete!\n\n";
+        
+        if (totalScore >= 280) {
+            message += "🌟 ENLIGHTENED PHILOSOPHER 🌟\nYou have achieved transcendent wisdom. Your choices reflect the highest ideals of human virtue and understanding.";
+        } else if (totalScore >= 240) {
+            message += "✨ WISE SAGE ✨\nYour moral compass guides you true. You embody the balance of thought, feeling, and action.";
+        } else if (totalScore >= 200) {
+            message += "🌱 THOUGHTFUL SEEKER 🌱\nYou walk the path of wisdom with growing understanding. Your journey of self-improvement continues.";
+        } else if (totalScore >= 160) {
+            message += "🤔 QUESTIONING STUDENT 🤔\nYou've begun to question and grow. Philosophy is the art of living well - keep practicing.";
+        } else {
+            message += "🌿 BEGINNING WANDERER 🌿\nEvery great philosopher started with questions. Reflect deeply on your choices and their consequences.";
+        }
+        
+        // Philosophical reflection based on dominant trait
+        const dominant = this.player.wisdom >= this.player.compassion && this.player.wisdom >= this.player.courage ? 'wisdom' :
+                        this.player.compassion >= this.player.courage ? 'compassion' : 'courage';
+        
+        const reflections = {
+            wisdom: "Your pursuit of knowledge illuminates the path for others.",
+            compassion: "Your empathy creates ripples of kindness in the world.",
+            courage: "Your bravery inspires others to face their own challenges."
+        };
+        
+        message += `\n\nYour strongest virtue: ${dominant.toUpperCase()}\n"${reflections[dominant]}"`;
+        message += `\n\nFinal Stats:\nWisdom: ${this.player.wisdom}\nCompassion: ${this.player.compassion}\nCourage: ${this.player.courage}`;
+        message += "\n\nPhilosophy in action: How will you apply these insights to your real life?";
+        
+        alert(message);
+        
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+    
+    gameLoop() {
+        this.update();
+        this.render();
+        requestAnimationFrame(() => this.gameLoop());
+    }
+}
+
+// Start the game when page loads
+window.addEventListener('load', () => {
+    new WisdomQuest();
+});
