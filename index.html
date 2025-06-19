@@ -13,6 +13,71 @@
             <p>An 8-bit adventure for the mind and soul</p>
         </header>
         
+        <div id="support-creator-panel" class="hidden">
+            <div class="support-header">
+                <h3>Support the Creator</h3>
+                <span class="close-support">×</span>
+            </div>
+            <div class="support-content">
+                <p>Thank you for playing Wisdom Quest! If you enjoyed this philosophical adventure, please consider supporting the creator:</p>
+                
+                <div class="support-options">
+                    <div class="support-option">
+                        <h4>Share on Social Media</h4>
+                        <div class="social-buttons">
+                            <a href="#" class="social-button twitter" onclick="shareOnTwitter(); return false;">
+                                <span>Twitter</span>
+                            </a>
+                            <a href="#" class="social-button facebook" onclick="shareOnFacebook(); return false;">
+                                <span>Facebook</span>
+                            </a>
+                            <a href="#" class="social-button reddit" onclick="shareOnReddit(); return false;">
+                                <span>Reddit</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="support-option">
+                        <h4>Support Development</h4>
+                        <div class="donation-buttons">
+                            <a href="#" class="donation-button" onclick="donateAmount('5'); return false;">
+                                <span>$5</span>
+                            </a>
+                            <a href="#" class="donation-button" onclick="donateAmount('10'); return false;">
+                                <span>$10</span>
+                            </a>
+                            <a href="#" class="donation-button" onclick="donateAmount('25'); return false;">
+                                <span>$25</span>
+                            </a>
+                            <a href="#" class="donation-button custom" onclick="donateCustom(); return false;">
+                                <span>Custom</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="support-option">
+                        <h4>Join the Community</h4>
+                        <p>Follow development and share your experiences:</p>
+                        <div class="community-buttons">
+                            <a href="#" class="community-button" onclick="joinDiscord(); return false;">
+                                <span>Discord</span>
+                            </a>
+                            <a href="#" class="community-button" onclick="joinGithub(); return false;">
+                                <span>GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="creator-message">
+                    <p>Your support helps create more philosophical games that inspire growth and reflection.</p>
+                    <p>Thank you for being part of this journey!</p>
+                </div>
+                
+                <button id="continue-playing" class="support-button">Continue Playing</button>
+            </div>
+        </div>
+        
         <div id="game-screen">
             <canvas id="gameCanvas" width="1000" height="750"></canvas>
             <div id="ui-overlay">
@@ -52,6 +117,8 @@
                         <div class="journal-tab active" data-tab="achievements">Achievements</div>
                         <div class="journal-tab" data-tab="secrets">Secrets</div>
                         <div class="journal-tab" data-tab="notes">Notes</div>
+                        <div class="journal-tab" data-tab="quests">Quests</div>
+                        <div class="journal-tab" data-tab="hints">Hints</div>
                     </div>
                     <div class="journal-content">
                         <div class="journal-page active" id="achievements-page">
@@ -71,6 +138,19 @@
                             <div id="notes-list">
                                 <p class="empty-state">Your journey's insights will appear here...</p>
                             </div>
+                        </div>
+                        <div class="journal-page" id="quests-page">
+                            <h4>Quest Progress</h4>
+                            <div id="quests-list">
+                                <p class="empty-state">Your quests will appear here...</p>
+                            </div>
+                        </div>
+                        <div class="journal-page" id="hints-page">
+                            <h4>Helpful Hints</h4>
+                            <div id="hints-list">
+                                <p class="empty-state">Hints will appear as you explore...</p>
+                            </div>
+                            <button id="show-hint" class="hint-button">Reveal Next Hint</button>
                         </div>
                     </div>
                 </div>
@@ -161,5 +241,48 @@
     </div>
     
     <script src="game.js"></script>
+    <script>
+        // Social sharing functions
+        function shareOnTwitter() {
+            const text = "I just played Wisdom Quest, a philosophical adventure game that challenges your moral choices! Check it out:";
+            const url = window.location.href;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+        }
+        
+        function shareOnFacebook() {
+            const url = window.location.href;
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        }
+        
+        function shareOnReddit() {
+            const title = "Wisdom Quest - A philosophical adventure game";
+            const url = window.location.href;
+            window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, '_blank');
+        }
+        
+        // Donation functions
+        function donateAmount(amount) {
+            // Replace with actual donation link
+            alert(`Thank you for your willingness to donate ${amount}! In a real implementation, this would redirect to a payment processor.`);
+        }
+        
+        function donateCustom() {
+            const amount = prompt("Enter donation amount ($):", "15");
+            if (amount && !isNaN(amount) && amount > 0) {
+                donateAmount(amount);
+            }
+        }
+        
+        // Community functions
+        function joinDiscord() {
+            // Replace with actual Discord invite
+            alert("This would redirect to the Discord server. Thanks for your interest in joining the community!");
+        }
+        
+        function joinGithub() {
+            // Replace with actual GitHub repo
+            alert("This would redirect to the GitHub repository. Thanks for your interest in the project's development!");
+        }
+    </script>
 </body>
 </html>

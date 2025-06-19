@@ -67,10 +67,10 @@ header p {
     top: 10px;
     left: 10px;
     background: rgba(0, 0, 0, 0.8);
-    padding: 12px;
+    padding: 14px;
     border: 2px solid #ffd700;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .stat {
@@ -102,9 +102,9 @@ header p {
     background: rgba(0, 0, 0, 0.9);
     border: 2px solid #ffd700;
     border-radius: 8px;
-    padding: 18px;
-    font-size: 12px;
-    line-height: 1.5;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.6;
     pointer-events: auto;
 }
 
@@ -127,9 +127,9 @@ header p {
     background: #1a1a2e;
     color: #ffd700;
     border: 1px solid #ffd700;
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-family: inherit;
-    font-size: 11px;
+    font-size: 13px;
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.2s;
@@ -145,7 +145,7 @@ header p {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    font-size: 10px;
+    font-size: 12px;
     color: #ccc;
     text-align: right;
 }
@@ -494,6 +494,13 @@ header p {
     transform: translateX(5px);
 }
 
+.achievement-item.highlighted, .secret-item.highlighted, .note-item.highlighted {
+    background: rgba(255, 215, 0, 0.15);
+    transform: translateX(5px);
+    border-left-color: #ffcc00;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
 .achievement-item h5, .secret-item h5, .note-item h5 {
     margin: 0 0 5px 0;
     color: #ffd700;
@@ -521,6 +528,268 @@ header p {
     text-align: center;
     font-style: italic;
     margin-top: 40px;
+}
+
+#support-creator-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 550px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 3px solid #ffd700;
+    border-radius: 8px;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.support-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(45deg, #1a1a2e, #16213e);
+    border-bottom: 2px solid #ffd700;
+}
+
+.support-header h3 {
+    margin: 0;
+    color: #ffd700;
+    font-size: 20px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.close-support {
+    color: #ffd700;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close-support:hover {
+    transform: scale(1.2);
+}
+
+.support-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    text-align: center;
+}
+
+.support-content > p {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.support-options {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-bottom: 20px;
+}
+
+.support-option {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.support-option h4 {
+    color: #ffd700;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.support-option p {
+    color: #ccc;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.social-buttons, .donation-buttons, .community-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.social-button, .donation-button, .community-button {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.social-button:hover, .donation-button:hover, .community-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.social-button.twitter {
+    background: #1DA1F2;
+}
+
+.social-button.facebook {
+    background: #4267B2;
+}
+
+.social-button.reddit {
+    background: #FF5700;
+}
+
+.donation-button {
+    background: #27ae60;
+    min-width: 60px;
+    text-align: center;
+}
+
+.donation-button.custom {
+    background: #8e44ad;
+}
+
+.community-button {
+    background: #3498db;
+    min-width: 100px;
+    text-align: center;
+}
+
+.creator-message {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 8px;
+}
+
+.creator-message p {
+    color: #ffd700;
+    font-size: 12px;
+    margin: 5px 0;
+}
+
+.support-button {
+    background: #ffd700;
+    color: #1a1a2e;
+    border: none;
+    padding: 12px 25px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.support-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.hint-button {
+    background: #3498db;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    margin-top: 15px;
+}
+
+.hint-button:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.quest-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-left: 3px solid #3498db;
+    transition: all 0.2s;
+}
+
+.quest-item.completed {
+    border-left-color: #2ecc71;
+}
+
+.quest-item.highlighted {
+    background: rgba(52, 152, 219, 0.15);
+    transform: translateX(5px);
+}
+
+.quest-item h5 {
+    margin: 0 0 5px 0;
+    color: #fff;
+    font-size: 14px;
+}
+
+.quest-item p {
+    margin: 0;
+    color: #ccc;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.quest-progress {
+    margin-top: 8px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.quest-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2ecc71);
+    transition: width 0.3s ease;
+}
+
+.hint-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-left: 3px solid #f39c12;
+    transition: all 0.2s;
+}
+
+.hint-item.highlighted {
+    background: rgba(243, 156, 18, 0.15);
+    transform: translateX(5px);
+}
+
+.hint-item h5 {
+    margin: 0 0 5px 0;
+    color: #f39c12;
+    font-size: 14px;
+}
+
+.hint-item p {
+    margin: 0;
+    color: #ccc;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.dog-name {
+    position: absolute;
+    color: #fff;
+    font-size: 10px;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .hidden {

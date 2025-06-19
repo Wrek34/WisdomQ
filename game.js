@@ -13,14 +13,36 @@ class WisdomQuest {
             name: 'Seeker'
         };
         
+        this.dog = {
+            x: 520, y: 395, size: 12, speed: 2.2,
+            color: '#8B4513',
+            active: true,
+            name: 'Socrates',
+            offsetX: 0,
+            offsetY: 0,
+            lastUpdateTime: 0
+        };
+        
         this.selectedChoice = 0;
         this.inDialogue = false;
         this.secretQuests = {
             fountain_secret: { discovered: false, completed: false, hint: "The fountain holds ancient wisdom..." },
             hidden_book: { discovered: false, completed: false, hint: "A mysterious book lies hidden in the library..." },
-            tavern_riddle: { discovered: false, completed: false, hint: "The bartender knows more than he lets on..." }
+            tavern_riddle: { discovered: false, completed: false, hint: "The bartender knows more than he lets on..." },
+            ancient_statue: { discovered: false, completed: false, hint: "The forest statue has a secret offering plate..." },
+            courthouse_scales: { discovered: false, completed: false, hint: "The scales of justice hide more than they show..." }
         };
         this.interactionCount = 0;
+        this.journalNavIndex = 0;
+        this.journalOpen = false;
+        this.mapDetails = {
+            town_square: { discovered: true, mapX: 250, mapY: 200 },
+            library: { discovered: false, mapX: 100, mapY: 100 },
+            market: { discovered: false, mapX: 400, mapY: 100 },
+            courthouse: { discovered: false, mapX: 100, mapY: 300 },
+            tavern: { discovered: false, mapX: 400, mapY: 300 },
+            forest: { discovered: false, mapX: 300, mapY: 400 }
+        };
         
         this.currentArea = 'town_square';
         this.areas = {
@@ -90,7 +112,21 @@ class WisdomQuest {
                     { x: 150, y: 400, type: 'hermit', name: 'The Hermit', interacted: false }
                 ],
                 buildings: [],
-                exits: [{ x: 50, y: 300, w: 50, h: 60, to: 'town_square', name: 'Town Square' }]
+                exits: [{ x: 50, y: 300, w: 50, h: 60, to: 'town_square', name: 'Town Square' }],
+                secrets: [
+                    { x: 800, y: 400, w: 40, h: 60, type: 'ancient_statue', name: 'Ancient Statue' }
+                ]
+            },
+            courthouse: {
+                name: 'Hall of Justice',
+                npcs: [
+                    { x: 400, y: 300, type: 'judge', name: 'The Judge', interacted: false }
+                ],
+                buildings: [],
+                exits: [{ x: 450, y: 650, w: 100, h: 50, to: 'town_square', name: 'Town Square' }],
+                secrets: [
+                    { x: 500, y: 200, w: 40, h: 40, type: 'courthouse_scales', name: 'Scales of Justice' }
+                ]
             }
         };
         
@@ -209,6 +245,22 @@ class WisdomQuest {
             if (e.key === 'j' || e.key === 'J') {
                 e.preventDefault();
                 this.toggleJournal();
+            }
+            
+            if (this.journalOpen) {
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    this.navigateJournal(-1);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    this.navigateJournal(1);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    this.changeJournalTab(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    this.changeJournalTab(1);
+                }
             }
             
             if (this.inDialogue) {
@@ -429,6 +481,42 @@ class WisdomQuest {
         }
     }
     
+    drawDog() {
+        // Body
+        this.ctx.fillStyle = this.dog.color;
+        this.ctx.fillRect(this.dog.x - 6 + this.dog.offsetX, this.dog.y - 3 + this.dog.offsetY, 12, 8);
+        
+        // Head
+        this.ctx.fillRect(this.dog.x - 4 + this.dog.offsetX, this.dog.y - 8 + this.dog.offsetY, 8, 6);
+        
+        // Ears
+        this.ctx.fillRect(this.dog.x - 6 + this.dog.offsetX, this.dog.y - 10 + this.dog.offsetY, 3, 4);
+        this.ctx.fillRect(this.dog.x + 3 + this.dog.offsetX, this.dog.y - 10 + this.dog.offsetY, 3, 4);
+        
+        // Eyes
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(this.dog.x - 3 + this.dog.offsetX, this.dog.y - 6 + this.dog.offsetY, 2, 2);
+        this.ctx.fillRect(this.dog.x + 1 + this.dog.offsetX, this.dog.y - 6 + this.dog.offsetY, 2, 2);
+        
+        // Nose
+        this.ctx.fillRect(this.dog.x - 1 + this.dog.offsetX, this.dog.y - 4 + this.dog.offsetY, 2, 2);
+        
+        // Tail - animated wagging
+        const tailWag = Math.sin(this.gameTime * 0.2) * 2;
+        this.ctx.fillStyle = this.dog.color;
+        this.ctx.fillRect(this.dog.x - 8 + tailWag + this.dog.offsetX, this.dog.y + this.dog.offsetY, 4, 3);
+        
+        // Legs
+        this.ctx.fillRect(this.dog.x - 5 + this.dog.offsetX, this.dog.y + 5 + this.dog.offsetY, 2, 4);
+        this.ctx.fillRect(this.dog.x + 3 + this.dog.offsetX, this.dog.y + 5 + this.dog.offsetY, 2, 4);
+        
+        // Dog name
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = '10px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(this.dog.name, this.dog.x + this.dog.offsetX, this.dog.y - 15 + this.dog.offsetY);
+    }
+    
     update() {
         if (this.gameState !== 'playing') return;
         
@@ -444,6 +532,34 @@ class WisdomQuest {
         }
         if (this.keys['d'] || this.keys['arrowright']) {
             this.player.x = Math.min(this.canvas.width - 16, this.player.x + this.player.speed);
+        }
+        
+        // Update dog position with delay
+        if (this.dog.active) {
+            // Calculate target position (slightly behind player)
+            const targetX = this.player.x - 30;
+            const targetY = this.player.y + 20;
+            
+            // Smooth follow with slight delay
+            const dx = targetX - this.dog.x;
+            const dy = targetY - this.dog.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 100) {
+                // Teleport if too far
+                this.dog.x = this.player.x - 20;
+                this.dog.y = this.player.y + 20;
+            } else if (distance > 5) {
+                // Move towards player
+                this.dog.x += dx * 0.08;
+                this.dog.y += dy * 0.08;
+            }
+            
+            // Add very slight random movement (much less than before)
+            if (this.gameTime % 60 === 0) {
+                this.dog.offsetX = Math.random() * 4 - 2;
+                this.dog.offsetY = Math.random() * 4 - 2;
+            }
         }
         
         // Track game time
@@ -528,6 +644,11 @@ class WisdomQuest {
         area.npcs.forEach(npc => {
             this.drawNPC(npc);
         });
+        
+        // Draw dog companion
+        if (this.dog.active) {
+            this.drawDog();
+        }
         
         // Draw player
         this.drawPlayer();
@@ -671,6 +792,62 @@ class WisdomQuest {
                 this.ctx.fillStyle = '#95a5a6';
                 this.ctx.fillRect(100, 380, 600, 20);
                 this.ctx.fillRect(120, 400, 560, 20);
+                
+                // Scales of Justice
+                this.ctx.fillStyle = '#c0c0c0';
+                // Base
+                this.ctx.fillRect(495, 200, 10, 40);
+                // Beam
+                this.ctx.fillRect(470, 200, 60, 5);
+                
+                // Scales - animated tilting
+                const tiltAngle = Math.sin(this.gameTime * 0.05) * 0.2;
+                
+                // Left scale
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.beginPath();
+                this.ctx.arc(470, 210 - tiltAngle * 10, 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Right scale
+                this.ctx.fillStyle = '#3498db';
+                this.ctx.beginPath();
+                this.ctx.arc(530, 210 + tiltAngle * 10, 10, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Glow effect if not discovered
+                if (!this.secretQuests.courthouse_scales.discovered) {
+                    const glowIntensity = Math.sin(this.gameTime * 0.1) * 0.3 + 0.7;
+                    this.ctx.fillStyle = `rgba(255, 215, 0, ${glowIntensity * 0.3})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(500, 200, 30, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Courthouse interior details
+                // Judge's bench
+                this.ctx.fillStyle = '#8b4513';
+                this.ctx.fillRect(400, 150, 200, 30);
+                this.ctx.fillRect(400, 150, 30, 50);
+                this.ctx.fillRect(570, 150, 30, 50);
+                
+                // Windows with light beams
+                for (let i = 0; i < 3; i++) {
+                    const x = 200 + i * 200;
+                    // Window frame
+                    this.ctx.fillStyle = '#34495e';
+                    this.ctx.fillRect(x, 50, 40, 60);
+                    
+                    // Light beam
+                    const beamOpacity = Math.sin(this.gameTime * 0.02 + i) * 0.1 + 0.2;
+                    this.ctx.fillStyle = `rgba(255, 255, 200, ${beamOpacity})`;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + 20, 110);
+                    this.ctx.lineTo(x + 5, 300);
+                    this.ctx.lineTo(x + 35, 300);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                }
             },
             tavern: () => {
                 // Floor pattern
@@ -752,6 +929,55 @@ class WisdomQuest {
                 // Path
                 this.ctx.fillStyle = '#8b7355';
                 this.ctx.fillRect(350, 0, 100, this.canvas.height);
+                
+                // Ancient statue
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.fillRect(800, 400, 40, 60);
+                // Statue head
+                this.ctx.fillRect(805, 380, 30, 20);
+                // Statue eyes - glow if not discovered
+                if (!this.secretQuests.ancient_statue.discovered) {
+                    const glowIntensity = Math.sin(this.gameTime * 0.1) * 0.3 + 0.7;
+                    this.ctx.fillStyle = `rgba(255, 215, 0, ${glowIntensity})`;
+                } else {
+                    this.ctx.fillStyle = '#333';
+                }
+                this.ctx.fillRect(810, 385, 5, 5);
+                this.ctx.fillRect(825, 385, 5, 5);
+                
+                // Offering plate
+                this.ctx.fillStyle = '#c0c0c0';
+                this.ctx.fillRect(810, 460, 20, 5);
+                
+                // Stream with animated water
+                this.ctx.fillStyle = '#4a90e2';
+                this.ctx.fillRect(600, 200, 300, 30);
+                
+                // Water ripples
+                const rippleTime = this.gameTime % 120;
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                for (let i = 0; i < 5; i++) {
+                    const x = 650 + i * 50;
+                    const y = 215;
+                    const size = Math.sin((rippleTime + i * 20) * 0.05) * 5 + 5;
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                // Mushrooms
+                for (let i = 0; i < 8; i++) {
+                    const x = (i * 123) % (this.canvas.width - 100) + 50;
+                    const y = (i * 157) % (this.canvas.height - 100) + 50;
+                    
+                    // Stem
+                    this.ctx.fillStyle = '#f5f5f5';
+                    this.ctx.fillRect(x, y, 6, 8);
+                    
+                    // Cap
+                    this.ctx.fillStyle = i % 3 === 0 ? '#e74c3c' : '#3498db';
+                    this.ctx.fillRect(x - 3, y - 4, 12, 6);
+                }
             }
         };
         
@@ -1095,6 +1321,14 @@ class WisdomQuest {
             tavern_riddle: {
                 text: "The mysterious bartender asks: 'What grows stronger when shared, yet costs nothing to give?' You answer: 'Knowledge and kindness.' He nods approvingly.",
                 reward: { wisdom: +8, compassion: +12, courage: +6 }
+            },
+            ancient_statue: {
+                text: "You place a small offering on the statue's plate. The statue's eyes glow, and you hear a voice in your mind: 'Remember that courage without wisdom is merely recklessness.'",
+                reward: { wisdom: +12, compassion: +5, courage: +10 }
+            },
+            courthouse_scales: {
+                text: "As you touch the scales, they balance perfectly. A sense of justice fills you: 'True justice requires both compassion and wisdom to balance the scales of life.'",
+                reward: { wisdom: +10, compassion: +15, courage: +5 }
             }
         };
         
@@ -1103,7 +1337,43 @@ class WisdomQuest {
             this.showSecretDiscovery(secretData.text, secretData.reward);
             this.applyStatChanges(secretData.reward);
             quest.completed = true;
+            
+            // Dog reaction to secret discovery
+            if (this.dog.active) {
+                this.dogReactToSecret();
+            }
+            
+            // Update map details
+            this.mapDetails[this.currentArea].discovered = true;
         }
+    }
+    
+    dogReactToSecret() {
+        // Dog gets excited and runs in circles
+        const originalX = this.dog.x;
+        const originalY = this.dog.y;
+        
+        // Animation frames
+        let frame = 0;
+        const maxFrames = 60;
+        const radius = 30;
+        
+        const animateExcitement = () => {
+            if (frame >= maxFrames) {
+                this.dog.x = originalX;
+                this.dog.y = originalY;
+                return;
+            }
+            
+            const angle = frame * 0.2;
+            this.dog.x = originalX + Math.cos(angle) * radius;
+            this.dog.y = originalY + Math.sin(angle) * radius;
+            
+            frame++;
+            requestAnimationFrame(animateExcitement);
+        };
+        
+        animateExcitement();
     }
     
     showSecretDiscovery(text, reward) {
@@ -1300,10 +1570,63 @@ class WisdomQuest {
         const journalPanel = document.getElementById('journal-panel');
         if (journalPanel.classList.contains('hidden')) {
             journalPanel.classList.remove('hidden');
+            this.journalOpen = true;
+            this.journalNavIndex = 0;
             this.updateJournal();
+            this.highlightJournalItem();
         } else {
             journalPanel.classList.add('hidden');
+            this.journalOpen = false;
         }
+    }
+    
+    navigateJournal(direction) {
+        const activeTab = document.querySelector('.journal-tab.active').dataset.tab;
+        const items = document.querySelectorAll(`#${activeTab}-page .achievement-item, #${activeTab}-page .secret-item, #${activeTab}-page .note-item`);
+        
+        if (items.length === 0) return;
+        
+        // Remove highlight from current item
+        if (this.journalNavIndex >= 0 && this.journalNavIndex < items.length) {
+            items[this.journalNavIndex].classList.remove('highlighted');
+        }
+        
+        // Update index
+        this.journalNavIndex = (this.journalNavIndex + direction + items.length) % items.length;
+        
+        // Highlight new item
+        this.highlightJournalItem();
+    }
+    
+    changeJournalTab(direction) {
+        const tabs = document.querySelectorAll('.journal-tab');
+        const currentTab = document.querySelector('.journal-tab.active');
+        let currentIndex = 0;
+        
+        tabs.forEach((tab, index) => {
+            if (tab === currentTab) currentIndex = index;
+        });
+        
+        const newIndex = (currentIndex + direction + tabs.length) % tabs.length;
+        const newTab = tabs[newIndex];
+        
+        // Simulate click on the new tab
+        newTab.click();
+        this.journalNavIndex = 0;
+        this.highlightJournalItem();
+    }
+    
+    highlightJournalItem() {
+        const activeTab = document.querySelector('.journal-tab.active').dataset.tab;
+        const items = document.querySelectorAll(`#${activeTab}-page .achievement-item, #${activeTab}-page .secret-item, #${activeTab}-page .note-item`);
+        
+        if (items.length === 0) return;
+        
+        // Add highlight to current item
+        items[this.journalNavIndex].classList.add('highlighted');
+        
+        // Scroll item into view if needed
+        items[this.journalNavIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
     updateJournal() {
@@ -1347,7 +1670,9 @@ class WisdomQuest {
         const allSecrets = [
             { id: 'fountain_secret', name: 'Ancient Fountain', desc: 'The fountain holds ancient wisdom that flows through time', discovered: this.secretQuests.fountain_secret.discovered },
             { id: 'hidden_book', name: 'The Ethics of Power', desc: 'A hidden tome containing profound insights about leadership', discovered: this.secretQuests.hidden_book.discovered },
-            { id: 'tavern_riddle', name: 'Bartender\'s Riddle', desc: 'Knowledge and kindness grow stronger when shared', discovered: this.secretQuests.tavern_riddle.discovered }
+            { id: 'tavern_riddle', name: 'Bartender\'s Riddle', desc: 'Knowledge and kindness grow stronger when shared', discovered: this.secretQuests.tavern_riddle.discovered },
+            { id: 'ancient_statue', name: 'Forest Statue', desc: 'An ancient statue with wisdom about courage', discovered: this.secretQuests.ancient_statue.discovered },
+            { id: 'courthouse_scales', name: 'Scales of Justice', desc: 'The scales that balance compassion and wisdom', discovered: this.secretQuests.courthouse_scales.discovered }
         ];
         
         if (allSecrets.some(s => s.discovered)) {
@@ -1399,6 +1724,151 @@ class WisdomQuest {
         } else {
             notesList.innerHTML = '<p class="empty-state">Your journey\'s insights will appear here...</p>';
         }
+        
+        // Update quests
+        const questsList = document.getElementById('quests-list');
+        questsList.innerHTML = '';
+        
+        const npcTotal = Object.values(this.areas).reduce((total, area) => total + area.npcs.length, 0);
+        const npcCompleted = Object.values(this.areas).reduce((total, area) => total + area.npcs.filter(npc => npc.interacted).length, 0);
+        const npcProgress = npcCompleted / npcTotal * 100;
+        
+        const secretTotal = Object.keys(this.secretQuests).length;
+        const secretCompleted = Object.values(this.secretQuests).filter(quest => quest.completed).length;
+        const secretProgress = secretCompleted / secretTotal * 100;
+        
+        const areaTotal = Object.keys(this.mapDetails).length;
+        const areaCompleted = Object.values(this.mapDetails).filter(area => area.discovered).length;
+        const areaProgress = areaCompleted / areaTotal * 100;
+        
+        const quests = [
+            { 
+                name: "Philosophical Dialogues", 
+                desc: `Speak with all the philosophers and characters (${npcCompleted}/${npcTotal})`,
+                progress: npcProgress,
+                completed: npcCompleted === npcTotal
+            },
+            { 
+                name: "Secret Discoveries", 
+                desc: `Find all hidden secrets throughout the world (${secretCompleted}/${secretTotal})`,
+                progress: secretProgress,
+                completed: secretCompleted === secretTotal
+            },
+            { 
+                name: "World Explorer", 
+                desc: `Visit all areas of the world (${areaCompleted}/${areaTotal})`,
+                progress: areaProgress,
+                completed: areaCompleted === areaTotal
+            }
+        ];
+        
+        quests.forEach(quest => {
+            const item = document.createElement('div');
+            item.className = quest.completed ? 'quest-item completed' : 'quest-item';
+            
+            const title = document.createElement('h5');
+            title.textContent = quest.completed ? `✅ ${quest.name}` : quest.name;
+            
+            const desc = document.createElement('p');
+            desc.textContent = quest.desc;
+            
+            const progress = document.createElement('div');
+            progress.className = 'quest-progress';
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'quest-progress-bar';
+            progressBar.style.width = `${quest.progress}%`;
+            
+            progress.appendChild(progressBar);
+            
+            item.appendChild(title);
+            item.appendChild(desc);
+            item.appendChild(progress);
+            questsList.appendChild(item);
+        });
+        
+        // Update hints
+        const hintsList = document.getElementById('hints-list');
+        hintsList.innerHTML = '';
+        
+        // Only show hints if player has interacted with at least one NPC
+        if (npcCompleted > 0) {
+            const availableHints = [
+                { 
+                    id: 'npc_hint', 
+                    title: "Character Locations", 
+                    text: "Look for characters in areas that match their profession. The Sage can be found in the library, while the Merchant is at the market."
+                },
+                { 
+                    id: 'secret_hint', 
+                    title: "Finding Secrets", 
+                    text: "Secrets often glow subtly. Look for unusual objects in each area - fountains, statues, and other special items may hide wisdom."
+                },
+                { 
+                    id: 'stat_hint', 
+                    title: "Balancing Stats", 
+                    text: "Different choices affect your stats in different ways. Try to balance Wisdom, Compassion, and Courage for the best outcome."
+                },
+                { 
+                    id: 'area_hint', 
+                    title: "Exploring Areas", 
+                    text: "Don't forget to visit the forest and courthouse. Each area has unique characters and secrets to discover."
+                },
+                { 
+                    id: 'dog_hint', 
+                    title: "Your Companion", 
+                    text: `${this.dog.name} is more than just a pet - he reacts to your discoveries and will help guide you to secrets.`
+                }
+            ];
+            
+            // Show hints based on progress
+            const hintsToShow = Math.min(Math.floor(npcCompleted / 2) + 1, availableHints.length);
+            
+            for (let i = 0; i < hintsToShow; i++) {
+                const hint = availableHints[i];
+                const item = document.createElement('div');
+                item.className = 'hint-item';
+                
+                const title = document.createElement('h5');
+                title.textContent = `💡 ${hint.title}`;
+                
+                const desc = document.createElement('p');
+                desc.textContent = hint.text;
+                
+                item.appendChild(title);
+                item.appendChild(desc);
+                hintsList.appendChild(item);
+            }
+            
+            // Add reveal hint button functionality
+            document.getElementById('show-hint').addEventListener('click', () => {
+                if (hintsToShow < availableHints.length) {
+                    const hint = availableHints[hintsToShow];
+                    const item = document.createElement('div');
+                    item.className = 'hint-item';
+                    
+                    const title = document.createElement('h5');
+                    title.textContent = `💡 ${hint.title}`;
+                    
+                    const desc = document.createElement('p');
+                    desc.textContent = hint.text;
+                    
+                    item.appendChild(title);
+                    item.appendChild(desc);
+                    hintsList.appendChild(item);
+                    
+                    // Highlight the new hint
+                    item.classList.add('highlighted');
+                    setTimeout(() => {
+                        item.classList.remove('highlighted');
+                    }, 2000);
+                } else {
+                    alert("You've discovered all available hints!");
+                }
+            });
+        } else {
+            hintsList.innerHTML = '<p class="empty-state">Interact with characters to unlock hints...</p>';
+        }
     }
     
     showEndingMessage() {
@@ -1433,9 +1903,27 @@ class WisdomQuest {
         
         alert(message);
         
+        // Show support creator panel instead of reloading
         setTimeout(() => {
-            location.reload();
+            this.showSupportCreator();
         }, 1000);
+    }
+    
+    showSupportCreator() {
+        const supportPanel = document.getElementById('support-creator-panel');
+        supportPanel.classList.remove('hidden');
+        
+        // Set up continue button
+        document.getElementById('continue-playing').addEventListener('click', () => {
+            supportPanel.classList.add('hidden');
+            location.reload(); // Restart game after closing support panel
+        });
+        
+        // Set up close button
+        document.querySelector('.close-support').addEventListener('click', () => {
+            supportPanel.classList.add('hidden');
+            location.reload(); // Restart game after closing support panel
+        });
     }
     
     gameLoop() {
