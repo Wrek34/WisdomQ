@@ -206,6 +206,11 @@ class WisdomQuest {
                 }
             }
             
+            if (e.key === 'j' || e.key === 'J') {
+                e.preventDefault();
+                this.toggleJournal();
+            }
+            
             if (this.inDialogue) {
                 if (e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -227,6 +232,21 @@ class WisdomQuest {
         
         document.getElementById('confirm-character').addEventListener('click', () => {
             this.startGame();
+        });
+        
+        // Journal setup
+        document.querySelector('.close-journal').addEventListener('click', () => {
+            this.toggleJournal();
+        });
+        
+        document.querySelectorAll('.journal-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.journal-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.journal-page').forEach(p => p.classList.remove('active'));
+                document.getElementById(`${tab.dataset.tab}-page`).classList.add('active');
+            });
         });
         
         this.setupCharacterCreation();
@@ -442,7 +462,12 @@ class WisdomQuest {
             { id: 'compassionate_soul', name: 'Compassionate Soul', desc: 'Reached 80+ Compassion', condition: () => this.player.compassion >= 80 },
             { id: 'brave_heart', name: 'Brave Heart', desc: 'Reached 80+ Courage', condition: () => this.player.courage >= 80 },
             { id: 'explorer', name: 'Town Explorer', desc: 'Visited all areas', condition: () => this.visitedAreas.size >= 6 },
-            { id: 'saint', name: 'Saint', desc: 'Made only virtuous choices', condition: () => this.reputation.good >= 5 && this.reputation.evil === 0 }
+            { id: 'saint', name: 'Saint', desc: 'Made only virtuous choices', condition: () => this.reputation.good >= 5 && this.reputation.evil === 0 },
+            { id: 'secret_seeker', name: 'Secret Seeker', desc: 'Discover all hidden secrets', condition: () => 
+                this.secretQuests.fountain_secret.completed && 
+                this.secretQuests.hidden_book.completed && 
+                this.secretQuests.tavern_riddle.completed 
+            }
         ];
         
         achievements.forEach(achievement => {
@@ -540,23 +565,87 @@ class WisdomQuest {
                 }
                 // Fountain in center
                 this.ctx.fillStyle = '#4a90e2';
-                this.ctx.fillRect(380, 280, 40, 40);
+                this.ctx.fillRect(480, 320, 40, 40);
                 this.ctx.fillStyle = '#87ceeb';
-                this.ctx.fillRect(385, 285, 30, 30);
+                this.ctx.fillRect(485, 325, 30, 30);
+                
+                // Water ripples
+                const rippleTime = this.gameTime % 60;
+                if (rippleTime < 30) {
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    this.ctx.beginPath();
+                    this.ctx.arc(500, 340, rippleTime/10, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
+                // Benches
+                this.ctx.fillStyle = '#8b4513';
+                this.ctx.fillRect(400, 380, 40, 10);
+                this.ctx.fillRect(560, 380, 40, 10);
+                this.ctx.fillRect(400, 260, 40, 10);
+                this.ctx.fillRect(560, 260, 40, 10);
+                
+                // Lamp posts
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(350, 200, 6, 40);
+                this.ctx.fillRect(650, 200, 6, 40);
+                this.ctx.fillRect(350, 500, 6, 40);
+                this.ctx.fillRect(650, 500, 6, 40);
+                
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.beginPath();
+                this.ctx.arc(353, 200, 8, 0, Math.PI * 2);
+                this.ctx.arc(653, 200, 8, 0, Math.PI * 2);
+                this.ctx.arc(353, 500, 8, 0, Math.PI * 2);
+                this.ctx.arc(653, 500, 8, 0, Math.PI * 2);
+                this.ctx.fill();
             },
             library: () => {
                 // Bookshelf pattern
                 this.ctx.fillStyle = '#8b4513';
-                for (let x = 50; x < this.canvas.width; x += 100) {
-                    this.ctx.fillRect(x, 50, 80, 200);
-                    // Books
-                    this.ctx.fillStyle = '#ff6b6b';
-                    this.ctx.fillRect(x + 5, 60, 8, 30);
-                    this.ctx.fillStyle = '#4ecdc4';
-                    this.ctx.fillRect(x + 15, 60, 8, 30);
-                    this.ctx.fillStyle = '#ffd700';
-                    this.ctx.fillRect(x + 25, 60, 8, 30);
+                for (let x = 50; x < this.canvas.width; x += 200) {
+                    this.ctx.fillRect(x, 50, 150, 250);
+                    
+                    // Books - multiple rows
+                    const colors = ['#ff6b6b', '#4ecdc4', '#ffd700', '#9b59b6', '#2ecc71', '#e67e22', '#6593F5'];
+                    
+                    for (let row = 0; row < 7; row++) {
+                        for (let col = 0; col < 15; col++) {
+                            const colorIndex = (row + col) % colors.length;
+                            this.ctx.fillStyle = colors[colorIndex];
+                            this.ctx.fillRect(x + 5 + col*10, 60 + row*30, 8, 25);
+                        }
+                    }
+                    
                     this.ctx.fillStyle = '#8b4513';
+                }
+                
+                // Reading tables
+                this.ctx.fillStyle = '#654321';
+                this.ctx.fillRect(250, 400, 100, 60);
+                this.ctx.fillRect(650, 400, 100, 60);
+                
+                // Chairs
+                this.ctx.fillStyle = '#8b4513';
+                this.ctx.fillRect(270, 460, 20, 20);
+                this.ctx.fillRect(310, 460, 20, 20);
+                this.ctx.fillRect(670, 460, 20, 20);
+                this.ctx.fillRect(710, 460, 20, 20);
+                
+                // Glowing candle
+                const candleFlicker = Math.sin(this.gameTime * 0.2) * 0.2 + 0.8;
+                this.ctx.fillStyle = `rgba(255, 215, 0, ${candleFlicker})`;
+                this.ctx.beginPath();
+                this.ctx.arc(500, 100, 15, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Secret book glow if not found
+                if (!this.secretQuests.hidden_book.discovered) {
+                    const bookGlow = Math.sin(this.gameTime * 0.1) * 0.3 + 0.7;
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${bookGlow * 0.2})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(100, 100, 20, 0, Math.PI * 2);
+                    this.ctx.fill();
                 }
             },
             market: () => {
@@ -584,17 +673,68 @@ class WisdomQuest {
                 this.ctx.fillRect(120, 400, 560, 20);
             },
             tavern: () => {
+                // Floor pattern
+                this.ctx.fillStyle = '#3d2314';
+                for (let x = 0; x < this.canvas.width; x += 40) {
+                    for (let y = 0; y < this.canvas.height; y += 40) {
+                        if ((x + y) % 80 === 0) {
+                            this.ctx.fillRect(x, y, 20, 20);
+                        }
+                    }
+                }
+                
+                // Bar counter
+                this.ctx.fillStyle = '#5e2c04';
+                this.ctx.fillRect(700, 150, 200, 40);
+                this.ctx.fillRect(700, 190, 30, 200);
+                
+                // Bottles on shelf
+                this.ctx.fillStyle = '#2c3e50';
+                for (let i = 0; i < 8; i++) {
+                    this.ctx.fillRect(720 + i*20, 120, 10, 25);
+                }
+                
                 // Tables and chairs
                 this.ctx.fillStyle = '#8b4513';
                 for (let i = 0; i < 6; i++) {
-                    const x = 100 + (i % 3) * 200;
-                    const y = 200 + Math.floor(i / 3) * 150;
-                    this.ctx.fillRect(x, y, 60, 40);
+                    const x = 150 + (i % 3) * 200;
+                    const y = 250 + Math.floor(i / 3) * 200;
+                    this.ctx.fillRect(x, y, 80, 60);
+                    
                     // Chairs
                     this.ctx.fillStyle = '#654321';
-                    this.ctx.fillRect(x - 15, y + 10, 15, 20);
-                    this.ctx.fillRect(x + 60, y + 10, 15, 20);
+                    this.ctx.fillRect(x - 20, y + 15, 20, 30);
+                    this.ctx.fillRect(x + 80, y + 15, 20, 30);
+                    this.ctx.fillRect(x + 30, y - 20, 20, 20);
+                    this.ctx.fillRect(x + 30, y + 60, 20, 20);
+                    
+                    // Mugs on tables
+                    this.ctx.fillStyle = '#d35400';
+                    this.ctx.fillRect(x + 15, y + 15, 15, 15);
+                    this.ctx.fillStyle = '#f39c12';
+                    this.ctx.fillRect(x + 50, y + 30, 15, 15);
+                    
                     this.ctx.fillStyle = '#8b4513';
+                }
+                
+                // Fireplace
+                this.ctx.fillStyle = '#7f8c8d';
+                this.ctx.fillRect(50, 300, 80, 100);
+                
+                // Fire animation
+                const fireHeight = Math.sin(this.gameTime * 0.2) * 10 + 30;
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(60, 350, 60, 50);
+                this.ctx.fillStyle = '#f39c12';
+                this.ctx.fillRect(70, 330, 40, fireHeight);
+                
+                // Mysterious bartender glow
+                if (!this.secretQuests.tavern_riddle.discovered) {
+                    const bartenderGlow = Math.sin(this.gameTime * 0.1) * 0.3 + 0.7;
+                    this.ctx.fillStyle = `rgba(255, 215, 0, ${bartenderGlow * 0.3})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(800, 200, 25, 0, Math.PI * 2);
+                    this.ctx.fill();
                 }
             },
             forest: () => {
@@ -1153,6 +1293,111 @@ class WisdomQuest {
             setTimeout(() => {
                 this.showEndingMessage();
             }, 2500);
+        }
+    }
+    
+    toggleJournal() {
+        const journalPanel = document.getElementById('journal-panel');
+        if (journalPanel.classList.contains('hidden')) {
+            journalPanel.classList.remove('hidden');
+            this.updateJournal();
+        } else {
+            journalPanel.classList.add('hidden');
+        }
+    }
+    
+    updateJournal() {
+        // Update achievements
+        const achievementsList = document.getElementById('achievements-list');
+        achievementsList.innerHTML = '';
+        
+        const allAchievements = [
+            { id: 'first_choice', name: 'First Steps', desc: 'Made your first moral choice', unlocked: this.achievements.includes('first_choice') },
+            { id: 'wise_seeker', name: 'Wise Seeker', desc: 'Reached 80+ Wisdom', unlocked: this.achievements.includes('wise_seeker') },
+            { id: 'compassionate_soul', name: 'Compassionate Soul', desc: 'Reached 80+ Compassion', unlocked: this.achievements.includes('compassionate_soul') },
+            { id: 'brave_heart', name: 'Brave Heart', desc: 'Reached 80+ Courage', unlocked: this.achievements.includes('brave_heart') },
+            { id: 'explorer', name: 'Town Explorer', desc: 'Visited all areas', unlocked: this.achievements.includes('explorer') },
+            { id: 'saint', name: 'Saint', desc: 'Made only virtuous choices', unlocked: this.achievements.includes('saint') },
+            { id: 'secret_seeker', name: 'Secret Seeker', desc: 'Discover all hidden secrets', unlocked: this.achievements.includes('secret_seeker') }
+        ];
+        
+        if (allAchievements.some(a => a.unlocked)) {
+            allAchievements.forEach(achievement => {
+                const item = document.createElement('div');
+                item.className = achievement.unlocked ? 'achievement-item' : 'achievement-item achievement-locked';
+                
+                const title = document.createElement('h5');
+                title.textContent = achievement.unlocked ? `🏆 ${achievement.name}` : `🔒 ???`;
+                
+                const desc = document.createElement('p');
+                desc.textContent = achievement.unlocked ? achievement.desc : 'Continue your journey to unlock this achievement';
+                
+                item.appendChild(title);
+                item.appendChild(desc);
+                achievementsList.appendChild(item);
+            });
+        } else {
+            achievementsList.innerHTML = '<p class="empty-state">Complete tasks to earn achievements...</p>';
+        }
+        
+        // Update secrets
+        const secretsList = document.getElementById('secrets-list');
+        secretsList.innerHTML = '';
+        
+        const allSecrets = [
+            { id: 'fountain_secret', name: 'Ancient Fountain', desc: 'The fountain holds ancient wisdom that flows through time', discovered: this.secretQuests.fountain_secret.discovered },
+            { id: 'hidden_book', name: 'The Ethics of Power', desc: 'A hidden tome containing profound insights about leadership', discovered: this.secretQuests.hidden_book.discovered },
+            { id: 'tavern_riddle', name: 'Bartender\'s Riddle', desc: 'Knowledge and kindness grow stronger when shared', discovered: this.secretQuests.tavern_riddle.discovered }
+        ];
+        
+        if (allSecrets.some(s => s.discovered)) {
+            allSecrets.forEach(secret => {
+                if (secret.discovered) {
+                    const item = document.createElement('div');
+                    item.className = 'secret-item';
+                    
+                    const title = document.createElement('h5');
+                    title.textContent = `🔮 ${secret.name}`;
+                    
+                    const desc = document.createElement('p');
+                    desc.textContent = secret.desc;
+                    
+                    item.appendChild(title);
+                    item.appendChild(desc);
+                    secretsList.appendChild(item);
+                }
+            });
+        } else {
+            secretsList.innerHTML = '<p class="empty-state">Explore the world to discover secrets...</p>';
+        }
+        
+        // Update notes
+        const notesList = document.getElementById('notes-list');
+        notesList.innerHTML = '';
+        
+        if (this.interactionCount > 0) {
+            const philosophicalNotes = [
+                { title: "On Wisdom", text: "True wisdom is knowing that you know nothing. - Socrates" },
+                { title: "On Courage", text: "Courage is not the absence of fear, but rather the assessment that something else is more important than fear. - Franklin D. Roosevelt" },
+                { title: "On Compassion", text: "If you want others to be happy, practice compassion. If you want to be happy, practice compassion. - Dalai Lama" }
+            ];
+            
+            philosophicalNotes.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'note-item';
+                
+                const title = document.createElement('h5');
+                title.textContent = `📝 ${note.title}`;
+                
+                const desc = document.createElement('p');
+                desc.textContent = note.text;
+                
+                item.appendChild(title);
+                item.appendChild(desc);
+                notesList.appendChild(item);
+            });
+        } else {
+            notesList.innerHTML = '<p class="empty-state">Your journey\'s insights will appear here...</p>';
         }
     }
     

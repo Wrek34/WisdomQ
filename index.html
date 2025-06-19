@@ -40,7 +40,39 @@
                 </div>
                 
                 <div id="controls">
-                    <p>Use WASD or Arrow Keys to move • Space/Enter to interact • In dialogue: ↑↓ to choose, Space/Enter to select</p>
+                    <p>Use WASD or Arrow Keys to move • Space/Enter to interact • In dialogue: ↑↓ to choose, Space/Enter to select • Press J for Journal</p>
+                </div>
+                
+                <div id="journal-panel" class="hidden">
+                    <div class="journal-header">
+                        <h3>Seeker's Journal</h3>
+                        <span class="close-journal">×</span>
+                    </div>
+                    <div class="journal-tabs">
+                        <div class="journal-tab active" data-tab="achievements">Achievements</div>
+                        <div class="journal-tab" data-tab="secrets">Secrets</div>
+                        <div class="journal-tab" data-tab="notes">Notes</div>
+                    </div>
+                    <div class="journal-content">
+                        <div class="journal-page active" id="achievements-page">
+                            <h4>Your Achievements</h4>
+                            <div id="achievements-list">
+                                <p class="empty-state">Complete tasks to earn achievements...</p>
+                            </div>
+                        </div>
+                        <div class="journal-page" id="secrets-page">
+                            <h4>Discovered Secrets</h4>
+                            <div id="secrets-list">
+                                <p class="empty-state">Explore the world to discover secrets...</p>
+                            </div>
+                        </div>
+                        <div class="journal-page" id="notes-page">
+                            <h4>Philosophical Notes</h4>
+                            <div id="notes-list">
+                                <p class="empty-state">Your journey's insights will appear here...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,6 +105,7 @@
                         <div class="color-option" data-color="#2ecc71"></div>
                         <div class="color-option" data-color="#f39c12"></div>
                         <div class="color-option" data-color="#e91e63"></div>
+                        <div class="color-option" data-color="#6593F5"></div>
                     </div>
                 </div>
                 <div class="option-group">
