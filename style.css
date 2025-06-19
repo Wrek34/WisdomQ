@@ -220,6 +220,48 @@ header p {
     margin-bottom: 20px;
 }
 
+#character-name {
+    background: #1a1a2e;
+    border: 2px solid #666;
+    color: #ffd700;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    border-radius: 4px;
+    text-align: center;
+    width: 200px;
+}
+
+#character-name:focus {
+    border-color: #ffd700;
+    outline: none;
+}
+
+.accessory-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.accessory-option {
+    background: #1a1a2e;
+    border: 2px solid #666;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 8px;
+    color: #ccc;
+    transition: all 0.2s;
+    min-width: 60px;
+    text-align: center;
+}
+
+.accessory-option.selected {
+    border-color: #ffd700;
+    color: #ffd700;
+    transform: scale(1.05);
+}
+
 #character-preview {
     margin-bottom: 20px;
 }

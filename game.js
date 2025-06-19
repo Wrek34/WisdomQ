@@ -5,41 +5,55 @@ class WisdomQuest {
         this.ctx.imageSmoothingEnabled = false;
         
         this.player = {
-            x: 400, y: 300, size: 16, speed: 2,
+            x: 500, y: 375, size: 16, speed: 2,
             wisdom: 50, compassion: 50, courage: 50,
             bodyColor: '#ffd700',
-            headColor: '#ffeb99'
+            headColor: '#ffeb99',
+            accessory: 'none',
+            name: 'Seeker'
         };
         
         this.selectedChoice = 0;
         this.inDialogue = false;
+        this.secretQuests = {
+            fountain_secret: { discovered: false, completed: false, hint: "The fountain holds ancient wisdom..." },
+            hidden_book: { discovered: false, completed: false, hint: "A mysterious book lies hidden in the library..." },
+            tavern_riddle: { discovered: false, completed: false, hint: "The bartender knows more than he lets on..." }
+        };
+        this.interactionCount = 0;
         
         this.currentArea = 'town_square';
         this.areas = {
             town_square: {
                 name: 'Town Square',
                 npcs: [
-                    { x: 400, y: 200, type: 'philosopher', name: 'The Philosopher', interacted: false },
-                    { x: 200, y: 400, type: 'child', name: 'Lost Child', interacted: false }
+                    { x: 500, y: 250, type: 'philosopher', name: 'The Philosopher', interacted: false },
+                    { x: 250, y: 500, type: 'child', name: 'Lost Child', interacted: false }
                 ],
                 buildings: [
-                    { x: 100, y: 100, w: 120, h: 80, type: 'library', name: 'Library' },
-                    { x: 580, y: 100, w: 120, h: 80, type: 'market', name: 'Market' },
-                    { x: 100, y: 450, w: 120, h: 80, type: 'courthouse', name: 'Courthouse' },
-                    { x: 580, y: 450, w: 120, h: 80, type: 'tavern', name: 'Tavern' }
+                    { x: 150, y: 150, w: 150, h: 100, type: 'library', name: 'Ancient Library' },
+                    { x: 700, y: 150, w: 150, h: 100, type: 'market', name: 'Grand Market' },
+                    { x: 150, y: 550, w: 150, h: 100, type: 'courthouse', name: 'Hall of Justice' },
+                    { x: 700, y: 550, w: 150, h: 100, type: 'tavern', name: 'Thinking Tavern' }
                 ],
                 exits: [
-                    { x: 750, y: 300, w: 50, h: 60, to: 'forest', name: 'Forest Path' }
+                    { x: 900, y: 350, w: 80, h: 80, to: 'forest', name: 'Forest Path' }
+                ],
+                secrets: [
+                    { x: 480, y: 320, w: 40, h: 40, type: 'fountain', name: 'Ancient Fountain' }
                 ]
             },
             library: {
                 name: 'Ancient Library',
                 npcs: [
-                    { x: 200, y: 300, type: 'sage', name: 'The Sage', interacted: false },
-                    { x: 600, y: 200, type: 'scientist', name: 'The Scientist', interacted: false }
+                    { x: 250, y: 375, type: 'sage', name: 'The Sage', interacted: false },
+                    { x: 750, y: 250, type: 'scientist', name: 'The Scientist', interacted: false }
                 ],
                 buildings: [],
-                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+                exits: [{ x: 450, y: 650, w: 100, h: 50, to: 'town_square', name: 'Town Square' }],
+                secrets: [
+                    { x: 100, y: 100, w: 30, h: 30, type: 'hidden_book', name: 'Mysterious Tome' }
+                ]
             },
             market: {
                 name: 'Bustling Market',
@@ -60,12 +74,15 @@ class WisdomQuest {
             tavern: {
                 name: 'The Thinking Tavern',
                 npcs: [
-                    { x: 200, y: 300, type: 'warrior', name: 'The Warrior', interacted: false },
-                    { x: 600, y: 350, type: 'artist', name: 'The Artist', interacted: false },
-                    { x: 400, y: 200, type: 'teacher', name: 'The Teacher', interacted: false }
+                    { x: 250, y: 375, type: 'warrior', name: 'The Warrior', interacted: false },
+                    { x: 750, y: 400, type: 'artist', name: 'The Artist', interacted: false },
+                    { x: 500, y: 250, type: 'teacher', name: 'The Teacher', interacted: false }
                 ],
                 buildings: [],
-                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+                exits: [{ x: 450, y: 650, w: 100, h: 50, to: 'town_square', name: 'Town Square' }],
+                secrets: [
+                    { x: 800, y: 200, w: 40, h: 40, type: 'tavern_riddle', name: 'Mysterious Bartender' }
+                ]
             },
             forest: {
                 name: 'Hermit\'s Forest',
@@ -263,6 +280,21 @@ class WisdomQuest {
                 Object.assign(this.player, stats[focus]);
             });
         });
+        
+        // Accessory selection
+        document.querySelectorAll('.accessory-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.accessory-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                this.player.accessory = option.dataset.accessory;
+                this.updateCharacterPreview();
+            });
+        });
+        
+        // Name input
+        document.getElementById('character-name').addEventListener('input', (e) => {
+            this.player.name = e.target.value || 'Seeker';
+        });
     }
     
     updateCharacterPreview() {
@@ -305,6 +337,9 @@ class WisdomQuest {
         ctx.fillStyle = legColor;
         ctx.fillRect(centerX - 6*scale, centerY + 8*scale, 4*scale, 6*scale);
         ctx.fillRect(centerX + 2*scale, centerY + 8*scale, 4*scale, 6*scale);
+        
+        // Draw accessory
+        this.drawAccessory(ctx, centerX, centerY, scale);
     }
     
     adjustColor(hex, amount) {
@@ -316,6 +351,62 @@ class WisdomQuest {
         return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
             (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
             (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    drawAccessory(ctx, x, y, scale) {
+        ctx.fillStyle = '#8b4513';
+        
+        switch(this.player.accessory) {
+            case 'hat':
+                ctx.fillRect(x - 8*scale, y - 16*scale, 16*scale, 4*scale);
+                ctx.fillRect(x - 6*scale, y - 20*scale, 12*scale, 4*scale);
+                break;
+            case 'glasses':
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x - 6*scale, y - 11*scale, 4*scale, 1*scale);
+                ctx.fillRect(x + 2*scale, y - 11*scale, 4*scale, 1*scale);
+                ctx.fillRect(x - 1*scale, y - 11*scale, 2*scale, 1*scale);
+                break;
+            case 'beard':
+                ctx.fillStyle = '#8b4513';
+                ctx.fillRect(x - 5*scale, y - 6*scale, 10*scale, 6*scale);
+                break;
+            case 'crown':
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(x - 8*scale, y - 16*scale, 16*scale, 3*scale);
+                ctx.fillRect(x - 6*scale, y - 19*scale, 3*scale, 3*scale);
+                ctx.fillRect(x - 1*scale, y - 20*scale, 2*scale, 4*scale);
+                ctx.fillRect(x + 3*scale, y - 19*scale, 3*scale, 3*scale);
+                break;
+        }
+    }
+    
+    drawPlayerAccessory() {
+        this.ctx.fillStyle = '#8b4513';
+        
+        switch(this.player.accessory) {
+            case 'hat':
+                this.ctx.fillRect(this.player.x - 8, this.player.y - 16, 16, 4);
+                this.ctx.fillRect(this.player.x - 6, this.player.y - 20, 12, 4);
+                break;
+            case 'glasses':
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(this.player.x - 6, this.player.y - 11, 4, 1);
+                this.ctx.fillRect(this.player.x + 2, this.player.y - 11, 4, 1);
+                this.ctx.fillRect(this.player.x - 1, this.player.y - 11, 2, 1);
+                break;
+            case 'beard':
+                this.ctx.fillStyle = '#8b4513';
+                this.ctx.fillRect(this.player.x - 5, this.player.y - 6, 10, 6);
+                break;
+            case 'crown':
+                this.ctx.fillStyle = '#ffd700';
+                this.ctx.fillRect(this.player.x - 8, this.player.y - 16, 16, 3);
+                this.ctx.fillRect(this.player.x - 6, this.player.y - 19, 3, 3);
+                this.ctx.fillRect(this.player.x - 1, this.player.y - 20, 2, 4);
+                this.ctx.fillRect(this.player.x + 3, this.player.y - 19, 3, 3);
+                break;
+        }
     }
     
     update() {
@@ -400,6 +491,13 @@ class WisdomQuest {
         area.exits.forEach(exit => {
             this.drawExit(exit);
         });
+        
+        // Draw secrets
+        if (area.secrets) {
+            area.secrets.forEach(secret => {
+                this.drawSecret(secret);
+            });
+        }
         
         // Draw NPCs
         area.npcs.forEach(npc => {
@@ -556,12 +654,49 @@ class WisdomQuest {
     
     drawAreaName(name) {
         this.ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        this.ctx.fillRect(10, 10, 200, 30);
+        this.ctx.fillRect(10, 10, 250, 40);
         
         this.ctx.fillStyle = '#ffd700';
         this.ctx.font = '12px monospace';
         this.ctx.textAlign = 'left';
         this.ctx.fillText(name, 20, 30);
+        
+        // Show player name
+        this.ctx.fillStyle = '#ccc';
+        this.ctx.font = '10px monospace';
+        this.ctx.fillText(`${this.player.name} the Seeker`, 20, 45);
+    }
+    
+    drawSecret(secret) {
+        const quest = this.secretQuests[secret.type];
+        if (quest && quest.completed) return;
+        
+        // Glowing effect
+        const glowIntensity = Math.sin(this.gameTime * 0.1) * 0.3 + 0.7;
+        this.ctx.fillStyle = `rgba(155, 89, 182, ${glowIntensity})`;
+        this.ctx.fillRect(secret.x - 2, secret.y - 2, secret.w + 4, secret.h + 4);
+        
+        this.ctx.fillStyle = '#9b59b6';
+        this.ctx.fillRect(secret.x, secret.y, secret.w, secret.h);
+        
+        // Secret symbol
+        this.ctx.fillStyle = '#ffd700';
+        this.ctx.font = '16px monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('?', secret.x + secret.w/2, secret.y + secret.h/2 + 6);
+        
+        // Hint on approach
+        const distance = Math.sqrt(
+            Math.pow(this.player.x - (secret.x + secret.w/2), 2) + 
+            Math.pow(this.player.y - (secret.y + secret.h/2), 2)
+        );
+        
+        if (distance < 60) {
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '8px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('Press SPACE', secret.x + secret.w/2, secret.y - 10);
+        }
     }
     
     drawPlayer() {
@@ -591,6 +726,9 @@ class WisdomQuest {
         this.ctx.fillStyle = legColor;
         this.ctx.fillRect(this.player.x - 6, this.player.y + 8, 4, 6);
         this.ctx.fillRect(this.player.x + 2, this.player.y + 8, 4, 6);
+        
+        // Draw accessory
+        this.drawPlayerAccessory();
     }
     
     drawNPC(npc) {
@@ -772,6 +910,16 @@ class WisdomQuest {
                 this.changeArea(exit.to);
             }
         });
+        
+        // Check secrets
+        if (area.secrets) {
+            area.secrets.forEach(secret => {
+                if (this.player.x >= secret.x && this.player.x <= secret.x + secret.w &&
+                    this.player.y >= secret.y && this.player.y <= secret.y + secret.h) {
+                    this.activateSecret(secret);
+                }
+            });
+        }
     }
     
     enterBuilding(buildingType) {
@@ -781,11 +929,66 @@ class WisdomQuest {
     changeArea(newArea) {
         this.currentArea = newArea;
         this.visitedAreas.add(newArea);
-        this.player.x = 400;
-        this.player.y = 300;
+        this.player.x = 500;
+        this.player.y = 375;
         
         // Show area transition effect
         this.showAreaTransition(this.areas[newArea].name);
+    }
+    
+    activateSecret(secret) {
+        const quest = this.secretQuests[secret.type];
+        if (!quest || quest.discovered) return;
+        
+        quest.discovered = true;
+        this.interactionCount++;
+        
+        const secrets = {
+            fountain: {
+                text: "You touch the ancient fountain and feel a surge of wisdom. The water whispers: 'True knowledge comes from understanding oneself.'",
+                reward: { wisdom: +15, compassion: +5, courage: +5 }
+            },
+            hidden_book: {
+                text: "You discover a hidden tome titled 'The Ethics of Power'. Reading it fills you with profound insights about leadership and responsibility.",
+                reward: { wisdom: +10, compassion: +10, courage: +8 }
+            },
+            tavern_riddle: {
+                text: "The mysterious bartender asks: 'What grows stronger when shared, yet costs nothing to give?' You answer: 'Knowledge and kindness.' He nods approvingly.",
+                reward: { wisdom: +8, compassion: +12, courage: +6 }
+            }
+        };
+        
+        const secretData = secrets[secret.type];
+        if (secretData) {
+            this.showSecretDiscovery(secretData.text, secretData.reward);
+            this.applyStatChanges(secretData.reward);
+            quest.completed = true;
+        }
+    }
+    
+    showSecretDiscovery(text, reward) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #9b59b6, #8e44ad); color: #fff; 
+            padding: 25px; border: 3px solid #ffd700; border-radius: 12px; 
+            font-family: inherit; font-size: 11px; z-index: 1000; 
+            text-align: center; max-width: 500px; line-height: 1.5;
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+        `;
+        notification.innerHTML = `<strong>🔮 SECRET DISCOVERED! 🔮</strong><br><br>${text}`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            document.body.removeChild(notification);
+            this.showStatChange(reward);
+        }, 4000);
+    }
+    
+    applyStatChanges(changes) {
+        this.player.wisdom = Math.max(0, Math.min(100, this.player.wisdom + changes.wisdom));
+        this.player.compassion = Math.max(0, Math.min(100, this.player.compassion + changes.compassion));
+        this.player.courage = Math.max(0, Math.min(100, this.player.courage + changes.courage));
     }
     
     showAreaTransition(areaName) {
