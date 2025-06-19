@@ -335,7 +335,50 @@ class WisdomQuest {
             this.player.x = Math.min(this.canvas.width - 16, this.player.x + this.player.speed);
         }
         
+        // Track game time
+        this.gameTime++;
+        
+        // Check for achievements
+        this.checkAchievements();
+        
         this.updateUI();
+    }
+    
+    checkAchievements() {
+        const achievements = [
+            { id: 'first_choice', name: 'First Steps', desc: 'Made your first moral choice', condition: () => this.reputation.good + this.reputation.neutral + this.reputation.evil > 0 },
+            { id: 'wise_seeker', name: 'Wise Seeker', desc: 'Reached 80+ Wisdom', condition: () => this.player.wisdom >= 80 },
+            { id: 'compassionate_soul', name: 'Compassionate Soul', desc: 'Reached 80+ Compassion', condition: () => this.player.compassion >= 80 },
+            { id: 'brave_heart', name: 'Brave Heart', desc: 'Reached 80+ Courage', condition: () => this.player.courage >= 80 },
+            { id: 'explorer', name: 'Town Explorer', desc: 'Visited all areas', condition: () => this.visitedAreas.size >= 6 },
+            { id: 'saint', name: 'Saint', desc: 'Made only virtuous choices', condition: () => this.reputation.good >= 5 && this.reputation.evil === 0 }
+        ];
+        
+        achievements.forEach(achievement => {
+            if (!this.achievements.includes(achievement.id) && achievement.condition()) {
+                this.achievements.push(achievement.id);
+                this.showAchievement(achievement);
+            }
+        });
+    }
+    
+    showAchievement(achievement) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; top: 20px; right: 20px; 
+            background: linear-gradient(45deg, #ffd700, #ffed4e); color: #1a1a2e; 
+            padding: 15px 20px; border: 2px solid #ffd700; border-radius: 8px; 
+            font-family: inherit; font-size: 10px; z-index: 1000; 
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            animation: slideIn 0.5s ease-out;
+        `;
+        notification.innerHTML = `<strong>🏆 ${achievement.name}</strong><br><small>${achievement.desc}</small>`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.5s ease-in';
+            setTimeout(() => document.body.removeChild(notification), 500);
+        }, 3000);
     }
     
     render() {
@@ -397,15 +440,80 @@ class WisdomQuest {
                         }
                     }
                 }
+                // Fountain in center
+                this.ctx.fillStyle = '#4a90e2';
+                this.ctx.fillRect(380, 280, 40, 40);
+                this.ctx.fillStyle = '#87ceeb';
+                this.ctx.fillRect(385, 285, 30, 30);
+            },
+            library: () => {
+                // Bookshelf pattern
+                this.ctx.fillStyle = '#8b4513';
+                for (let x = 50; x < this.canvas.width; x += 100) {
+                    this.ctx.fillRect(x, 50, 80, 200);
+                    // Books
+                    this.ctx.fillStyle = '#ff6b6b';
+                    this.ctx.fillRect(x + 5, 60, 8, 30);
+                    this.ctx.fillStyle = '#4ecdc4';
+                    this.ctx.fillRect(x + 15, 60, 8, 30);
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.fillRect(x + 25, 60, 8, 30);
+                    this.ctx.fillStyle = '#8b4513';
+                }
+            },
+            market: () => {
+                // Market stalls
+                this.ctx.fillStyle = '#d35400';
+                for (let i = 0; i < 4; i++) {
+                    const x = 100 + i * 150;
+                    this.ctx.fillRect(x, 200, 100, 60);
+                    // Awning
+                    this.ctx.fillStyle = '#e74c3c';
+                    this.ctx.fillRect(x - 10, 180, 120, 20);
+                    this.ctx.fillStyle = '#d35400';
+                }
+            },
+            courthouse: () => {
+                // Pillars
+                this.ctx.fillStyle = '#bdc3c7';
+                for (let i = 0; i < 5; i++) {
+                    const x = 150 + i * 100;
+                    this.ctx.fillRect(x, 100, 20, 300);
+                }
+                // Steps
+                this.ctx.fillStyle = '#95a5a6';
+                this.ctx.fillRect(100, 380, 600, 20);
+                this.ctx.fillRect(120, 400, 560, 20);
+            },
+            tavern: () => {
+                // Tables and chairs
+                this.ctx.fillStyle = '#8b4513';
+                for (let i = 0; i < 6; i++) {
+                    const x = 100 + (i % 3) * 200;
+                    const y = 200 + Math.floor(i / 3) * 150;
+                    this.ctx.fillRect(x, y, 60, 40);
+                    // Chairs
+                    this.ctx.fillStyle = '#654321';
+                    this.ctx.fillRect(x - 15, y + 10, 15, 20);
+                    this.ctx.fillRect(x + 60, y + 10, 15, 20);
+                    this.ctx.fillStyle = '#8b4513';
+                }
             },
             forest: () => {
                 // Tree pattern
                 this.ctx.fillStyle = '#0d3d0d';
-                for (let i = 0; i < 20; i++) {
+                for (let i = 0; i < 30; i++) {
                     const x = (i * 73) % this.canvas.width;
                     const y = (i * 97) % this.canvas.height;
-                    this.ctx.fillRect(x, y, 8, 12);
+                    this.ctx.fillRect(x, y, 8, 20);
+                    // Tree tops
+                    this.ctx.fillStyle = '#228b22';
+                    this.ctx.fillRect(x - 4, y - 8, 16, 12);
+                    this.ctx.fillStyle = '#0d3d0d';
                 }
+                // Path
+                this.ctx.fillStyle = '#8b7355';
+                this.ctx.fillRect(350, 0, 100, this.canvas.height);
             }
         };
         
@@ -672,8 +780,29 @@ class WisdomQuest {
     
     changeArea(newArea) {
         this.currentArea = newArea;
+        this.visitedAreas.add(newArea);
         this.player.x = 400;
         this.player.y = 300;
+        
+        // Show area transition effect
+        this.showAreaTransition(this.areas[newArea].name);
+    }
+    
+    showAreaTransition(areaName) {
+        const transition = document.createElement('div');
+        transition.style.cssText = `
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: #ffd700; padding: 20px 40px;
+            border: 2px solid #ffd700; border-radius: 8px; font-family: inherit;
+            font-size: 14px; z-index: 1000; text-align: center;
+            animation: fadeInOut 2s ease-in-out;
+        `;
+        transition.textContent = `Entering ${areaName}`;
+        document.body.appendChild(transition);
+        
+        setTimeout(() => {
+            document.body.removeChild(transition);
+        }, 2000);
     }
     
     startDialogue(npc) {
@@ -721,6 +850,16 @@ class WisdomQuest {
         this.player.wisdom = Math.max(0, Math.min(100, this.player.wisdom + choice.effect.wisdom));
         this.player.compassion = Math.max(0, Math.min(100, this.player.compassion + choice.effect.compassion));
         this.player.courage = Math.max(0, Math.min(100, this.player.courage + choice.effect.courage));
+        
+        // Track reputation
+        const totalEffect = choice.effect.wisdom + choice.effect.compassion + choice.effect.courage;
+        if (totalEffect > 10) {
+            this.reputation.good++;
+        } else if (totalEffect < -10) {
+            this.reputation.evil++;
+        } else {
+            this.reputation.neutral++;
+        }
         
         // Mark NPC as interacted
         npc.interacted = true;
