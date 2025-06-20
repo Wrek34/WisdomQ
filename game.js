@@ -91,7 +91,10 @@ class WisdomQuest {
                     { x: 400, y: 300, type: 'judge', name: 'The Judge', interacted: false }
                 ],
                 buildings: [],
-                exits: [{ x: 350, y: 550, w: 100, h: 50, to: 'town_square', name: 'Town Square' }]
+                exits: [{ x: 450, y: 650, w: 100, h: 50, to: 'town_square', name: 'Town Square' }],
+                secrets: [
+                    { x: 500, y: 200, w: 40, h: 40, type: 'courthouse_scales', name: 'Scales of Justice' }
+                ]
             },
             tavern: {
                 name: 'The Thinking Tavern',
@@ -115,17 +118,6 @@ class WisdomQuest {
                 exits: [{ x: 50, y: 300, w: 50, h: 60, to: 'town_square', name: 'Town Square' }],
                 secrets: [
                     { x: 800, y: 400, w: 40, h: 60, type: 'ancient_statue', name: 'Ancient Statue' }
-                ]
-            },
-            courthouse: {
-                name: 'Hall of Justice',
-                npcs: [
-                    { x: 400, y: 300, type: 'judge', name: 'The Judge', interacted: false }
-                ],
-                buildings: [],
-                exits: [{ x: 450, y: 650, w: 100, h: 50, to: 'town_square', name: 'Town Square' }],
-                secrets: [
-                    { x: 500, y: 200, w: 40, h: 40, type: 'courthouse_scales', name: 'Scales of Justice' }
                 ]
             }
         };
@@ -512,7 +504,7 @@ class WisdomQuest {
         
         // Dog name
         this.ctx.fillStyle = '#fff';
-        this.ctx.font = '10px monospace';
+        this.ctx.font = '12px monospace';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(this.dog.name, this.dog.x + this.dog.offsetX, this.dog.y - 15 + this.dog.offsetY);
     }
@@ -1003,7 +995,7 @@ class WisdomQuest {
         
         // Name
         this.ctx.fillStyle = '#fff';
-        this.ctx.font = '10px monospace';
+        this.ctx.font = '12px monospace';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(building.name, building.x + building.w/2, building.y - 5);
     }
@@ -1131,7 +1123,7 @@ class WisdomQuest {
         
         // Name label
         this.ctx.fillStyle = '#fff';
-        this.ctx.font = '8px monospace';
+        this.ctx.font = '10px monospace';
         this.ctx.textAlign = 'center';
         this.ctx.fillText(npc.name, npc.x, npc.y - 18);
     }
