@@ -119,6 +119,7 @@
                         <div class="journal-tab" data-tab="notes">Notes</div>
                         <div class="journal-tab" data-tab="quests">Quests</div>
                         <div class="journal-tab" data-tab="hints">Hints</div>
+                        <div class="journal-tab" data-tab="support">Support</div>
                     </div>
                     <div class="journal-content">
                         <div class="journal-page active" id="achievements-page">
@@ -151,6 +152,56 @@
                                 <p class="empty-state">Hints will appear as you explore...</p>
                             </div>
                             <button id="show-hint" class="hint-button">Reveal Next Hint</button>
+                        </div>
+                        <div class="journal-page" id="support-page">
+                            <h4>Support the Creator</h4>
+                            <p class="support-intro">If you're enjoying Wisdom Quest, please consider supporting the creator:</p>
+                            
+                            <div class="journal-support-options">
+                                <div class="journal-support-section">
+                                    <h5>Share on Social Media</h5>
+                                    <div class="social-buttons">
+                                        <a href="#" class="social-button twitter" onclick="shareOnTwitter(); return false;">
+                                            <span>Twitter</span>
+                                        </a>
+                                        <a href="#" class="social-button facebook" onclick="shareOnFacebook(); return false;">
+                                            <span>Facebook</span>
+                                        </a>
+                                        <a href="#" class="social-button reddit" onclick="shareOnReddit(); return false;">
+                                            <span>Reddit</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="journal-support-section">
+                                    <h5>Support Development</h5>
+                                    <div class="donation-buttons">
+                                        <a href="#" class="donation-button" onclick="donateAmount('5'); return false;">
+                                            <span>$5</span>
+                                        </a>
+                                        <a href="#" class="donation-button" onclick="donateAmount('10'); return false;">
+                                            <span>$10</span>
+                                        </a>
+                                        <a href="#" class="donation-button" onclick="donateAmount('25'); return false;">
+                                            <span>$25</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div class="journal-support-section">
+                                    <h5>Join the Community</h5>
+                                    <div class="community-buttons">
+                                        <a href="#" class="community-button" onclick="joinDiscord(); return false;">
+                                            <span>Discord</span>
+                                        </a>
+                                        <a href="#" class="community-button" onclick="joinGithub(); return false;">
+                                            <span>GitHub</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p class="support-message">Your support helps create more philosophical games that inspire growth and reflection.</p>
                         </div>
                     </div>
                 </div>

@@ -62,7 +62,7 @@ class WisdomQuest {
                     { x: 900, y: 350, w: 80, h: 80, to: 'forest', name: 'Forest Path' }
                 ],
                 secrets: [
-                    { x: 480, y: 320, w: 40, h: 40, type: 'fountain', name: 'Ancient Fountain' }
+                    { x: 500, y: 340, w: 40, h: 40, type: 'fountain', name: 'Ancient Fountain' }
                 ]
             },
             library: {
@@ -686,9 +686,9 @@ class WisdomQuest {
                 }
                 // Fountain in center
                 this.ctx.fillStyle = '#4a90e2';
-                this.ctx.fillRect(480, 320, 40, 40);
+                this.ctx.fillRect(500, 340, 40, 40);
                 this.ctx.fillStyle = '#87ceeb';
-                this.ctx.fillRect(485, 325, 30, 30);
+                this.ctx.fillRect(505, 345, 30, 30);
                 
                 // Water ripples
                 const rippleTime = this.gameTime % 60;
@@ -1304,7 +1304,10 @@ class WisdomQuest {
     
     activateSecret(secret) {
         const quest = this.secretQuests[secret.type];
-        if (!quest || quest.discovered) return;
+        if (!quest) return;
+        
+        // Allow re-interaction with secrets that have been discovered but not completed
+        if (quest.discovered && quest.completed) return;
         
         quest.discovered = true;
         this.interactionCount++;
@@ -1630,6 +1633,11 @@ class WisdomQuest {
     }
     
     updateJournal() {
+        // Remove any existing event listeners to prevent duplicates
+        const showHintButton = document.getElementById('show-hint');
+        const newShowHintButton = showHintButton.cloneNode(true);
+        showHintButton.parentNode.replaceChild(newShowHintButton, showHintButton);
+        
         // Update achievements
         const achievementsList = document.getElementById('achievements-list');
         achievementsList.innerHTML = '';
@@ -1729,9 +1737,18 @@ class WisdomQuest {
         const questsList = document.getElementById('quests-list');
         questsList.innerHTML = '';
         
-        const npcTotal = Object.values(this.areas).reduce((total, area) => total + area.npcs.length, 0);
-        const npcCompleted = Object.values(this.areas).reduce((total, area) => total + area.npcs.filter(npc => npc.interacted).length, 0);
-        const npcProgress = npcCompleted / npcTotal * 100;
+        // Count NPCs correctly
+        let npcTotal = 0;
+        let npcCompleted = 0;
+        
+        Object.values(this.areas).forEach(area => {
+            if (area.npcs) {
+                npcTotal += area.npcs.length;
+                npcCompleted += area.npcs.filter(npc => npc.interacted).length;
+            }
+        });
+        
+        const npcProgress = npcTotal > 0 ? (npcCompleted / npcTotal * 100) : 0;
         
         const secretTotal = Object.keys(this.secretQuests).length;
         const secretCompleted = Object.values(this.secretQuests).filter(quest => quest.completed).length;
@@ -1842,8 +1859,12 @@ class WisdomQuest {
             
             // Add reveal hint button functionality
             document.getElementById('show-hint').addEventListener('click', () => {
-                if (hintsToShow < availableHints.length) {
-                    const hint = availableHints[hintsToShow];
+                // Always show at least one hint even if no NPCs have been interacted with
+                const availableHintsCount = availableHints.length;
+                const currentHintsCount = hintsList.querySelectorAll('.hint-item').length;
+                
+                if (currentHintsCount < availableHintsCount) {
+                    const hint = availableHints[currentHintsCount];
                     const item = document.createElement('div');
                     item.className = 'hint-item';
                     
@@ -1862,6 +1883,12 @@ class WisdomQuest {
                     setTimeout(() => {
                         item.classList.remove('highlighted');
                     }, 2000);
+                    
+                    // Remove empty state message if it exists
+                    const emptyState = hintsList.querySelector('.empty-state');
+                    if (emptyState) {
+                        hintsList.removeChild(emptyState);
+                    }
                 } else {
                     alert("You've discovered all available hints!");
                 }
